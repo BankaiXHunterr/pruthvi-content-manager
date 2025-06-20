@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { InfoIcon, MessageSquare } from 'lucide-react';
+import { InfoIcon, MessageSquare, Download } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -23,10 +23,11 @@ interface WebsiteCardProps {
   website: Website;
   onEdit: (website: Website) => void;
   onViewComments: (website: Website) => void;
+  onDownload: (website: Website) => void;
   viewMode: 'grid' | 'list';
 }
 
-const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewComments, viewMode }) => {
+const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewComments, onDownload, viewMode }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -79,6 +80,14 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
             <p className="text-sm text-gray-500 line-clamp-2">{website.content}</p>
           </div>
           <div className="ml-4 flex gap-2">
+            <Button
+              onClick={() => onDownload(website)}
+              variant="outline"
+              className="border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+            >
+              <Download className="h-4 w-4 mr-1" />
+              Download
+            </Button>
             <Button
               onClick={() => onViewComments(website)}
               variant="outline"
@@ -138,6 +147,13 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
           Updated: {website.lastUpdated}
         </span>
         <div className="flex gap-2">
+          <Button
+            onClick={() => onDownload(website)}
+            variant="outline"
+            className="border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
+          >
+            <Download className="h-4 w-4" />
+          </Button>
           <Button
             onClick={() => onViewComments(website)}
             variant="outline"

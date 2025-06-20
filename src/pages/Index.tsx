@@ -50,6 +50,30 @@ const Index = () => {
     setIsCommentsModalOpen(true);
   };
 
+  const handleDownload = (website: Website) => {
+    // Simulate downloading a zip file of the website's codebase
+    const fileName = `${website.name.toLowerCase().replace(/\s+/g, '-')}-codebase.zip`;
+    
+    // Create a blob with some sample content (in a real app, this would be the actual zip file)
+    const content = `# ${website.name} Codebase\n\nThis would contain the deployed codebase for ${website.name}.\n\nProject Details:\n- Status: ${website.status}\n- Category: ${website.category}\n- Last Updated: ${website.lastUpdated}\n\nDescription: ${website.description}`;
+    
+    const blob = new Blob([content], { type: 'application/zip' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up the URL object
+    URL.revokeObjectURL(url);
+    
+    showToast(`Downloaded codebase for ${website.name}`, 'success');
+  };
+
   const handleSave = (website: Website, newContent: string) => {
     setWebsites(prev => 
       prev.map(w => 
@@ -148,6 +172,7 @@ const Index = () => {
                 website={website}
                 onEdit={handleEdit}
                 onViewComments={handleViewComments}
+                onDownload={handleDownload}
                 viewMode={viewMode}
               />
             ))}
