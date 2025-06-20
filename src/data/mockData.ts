@@ -4,30 +4,30 @@ import { Website } from '../components/WebsiteCard';
 export const mockWebsites: Website[] = [
   {
     id: '1',
-    name: 'Brobot Search Page',
-    description: 'AI-powered search interface for customer queries',
-    content: 'Interactive search page with intelligent bot assistance for customer support and product discovery.',
+    name: 'ICICI Prudential Life',
+    description: 'Life insurance solutions for families and individuals',
+    content: 'Secure your family\'s future with our comprehensive life insurance plans. Our policies provide financial security and peace of mind for you and your loved ones. With flexible premium options and extensive coverage, we ensure your family\'s financial well-being even in your absence.',
     status: 'active',
     lastUpdated: '24/04/2024',
-    category: 'Search Interface'
+    category: 'Insurance'
   },
   {
     id: '2',
-    name: 'Bluechip Fund Landing Page',
-    description: 'Premium investment fund marketing page',
-    content: 'High-performance bluechip fund landing page with detailed investment information and portfolio data.',
+    name: 'ICICI Mutual Fund',
+    description: 'Investment solutions for wealth creation',
+    content: 'Explore our wide range of mutual fund investment options designed to help you achieve your financial goals. From equity funds to debt funds, SIP options to lump sum investments, we offer diversified portfolios managed by expert fund managers.',
     status: 'pending',
     lastUpdated: '22/04/2024',
-    category: 'Investment Products'
+    category: 'Investments'
   },
   {
     id: '3',
-    name: 'Retirement Plan Landing Page',
-    description: 'Comprehensive retirement planning solutions',
-    content: 'Complete retirement planning portal with calculators, investment options, and personalized recommendations.',
-    status: 'draft',
+    name: 'ICICI Lombard',
+    description: 'General insurance for comprehensive protection',
+    content: 'Get comprehensive insurance solutions for your needs including motor insurance, health insurance, travel insurance, and home insurance. Our policies are designed to provide maximum coverage at competitive premiums.',
+    status: 'active',
     lastUpdated: '23/04/2024',
-    category: 'Retirement Planning'
+    category: 'Insurance'
   },
   {
     id: '4',

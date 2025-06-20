@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import Header from '../components/Header';
 import FilterBar from '../components/FilterBar';
@@ -35,26 +34,7 @@ const Index = () => {
                           website.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           website.content.toLowerCase().includes(searchTerm.toLowerCase());
       
-      let matchesStatus = false;
-      switch (statusFilter) {
-        case 'all':
-          matchesStatus = true;
-          break;
-        case 'draft':
-          matchesStatus = website.status === 'draft';
-          break;
-        case 'marketing-review':
-          matchesStatus = website.status === 'pending';
-          break;
-        case 'compliance-review':
-          matchesStatus = website.status === 'active';
-          break;
-        case 'ready-deploy':
-          matchesStatus = website.status === 'active';
-          break;
-        default:
-          matchesStatus = true;
-      }
+      const matchesStatus = statusFilter === 'all' || website.status === statusFilter;
       
       return matchesSearch && matchesStatus;
     });

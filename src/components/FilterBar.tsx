@@ -38,23 +38,22 @@ const FilterBar: React.FC<FilterBarProps> = ({
             placeholder="Search websites..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 border-gray-300 focus:border-[#18385D] focus:ring-[#18385D]"
+            className="pl-10 border-gray-300 focus:border-icici-orange focus:ring-icici-orange"
           />
         </div>
 
         {/* Filters and View Toggle */}
         <div className="flex items-center gap-3">
-          {/* Status Filter - Updated with new values */}
+          {/* Status Filter */}
           <Select value={statusFilter} onValueChange={onStatusChange}>
-            <SelectTrigger className="w-48 border-gray-300">
+            <SelectTrigger className="w-32 border-gray-300">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent className="bg-white">
               <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="pending">Pending Update</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="marketing-review">Marketing Review in Progress</SelectItem>
-              <SelectItem value="compliance-review">Compliance Review in Progress</SelectItem>
-              <SelectItem value="ready-deploy">Ready to Deploy</SelectItem>
             </SelectContent>
           </Select>
 
@@ -66,7 +65,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
               onClick={() => onViewModeChange('grid')}
               className={`rounded-r-none ${
                 viewMode === 'grid'
-                  ? 'bg-[#18385D] hover:bg-[#EF6886] text-white'
+                  ? 'bg-icici-orange hover:bg-icici-red text-white'
                   : 'hover:bg-gray-100'
               }`}
             >
@@ -78,7 +77,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
               onClick={() => onViewModeChange('list')}
               className={`rounded-l-none ${
                 viewMode === 'list'
-                  ? 'bg-[#18385D] hover:bg-[#EF6886] text-white'
+                  ? 'bg-icici-orange hover:bg-icici-red text-white'
                   : 'hover:bg-gray-100'
               }`}
             >

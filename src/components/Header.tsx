@@ -23,20 +23,18 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
         {/* Left - Logo */}
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            {/* ICICI Logo Icon - can be replaced with official logo later */}
-            <div className="w-10 h-10 bg-gradient-to-br from-[#18385D] to-[#EF6886] rounded-full flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white"/>
-                <path d="M2 17L12 22L22 17" fill="white"/>
-                <path d="M2 12L12 17L22 12" fill="white"/>
-              </svg>
+            <div className="w-8 h-8 bg-gradient-to-br from-icici-orange to-icici-red rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-sm">i</span>
             </div>
+            <span className="hidden sm:block text-xl font-bold text-icici-darkGray">
+              ICICI BANK
+            </span>
           </div>
         </div>
 
-        {/* Center - Updated Title */}
+        {/* Center - Title */}
         <div className="hidden md:block">
-          <h1 className="text-lg lg:text-xl font-semibold text-[#18385D] text-center font-montserrat">
+          <h1 className="text-lg lg:text-xl font-semibold text-icici-darkGray text-center">
             ICICI Prudential Marketing Content Management
           </h1>
           <p className="text-sm text-gray-600 text-center mt-1">
@@ -60,8 +58,8 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100">
-                  <User className="h-4 w-4 text-[#18385D]" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-icici-lightGray">
+                  <User className="h-4 w-4 text-icici-darkGray" />
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -90,7 +88,7 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
 
       {/* Mobile Title */}
       <div className="md:hidden px-4 pb-3">
-        <h1 className="text-lg font-semibold text-[#18385D] font-montserrat">
+        <h1 className="text-lg font-semibold text-icici-darkGray">
           Content Management
         </h1>
         <p className="text-sm text-gray-600">
