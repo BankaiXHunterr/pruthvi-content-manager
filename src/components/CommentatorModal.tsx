@@ -1,8 +1,9 @@
 
-import React from 'react';
-import { MessageSquare, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { MessageSquare, X, Send, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Website } from './WebsiteCard';
 
 interface Comment {
@@ -11,6 +12,7 @@ interface Comment {
   message: string;
   timestamp: string;
   status: 'approved' | 'needs-revision' | 'pending';
+  avatar?: string;
 }
 
 interface CommentatorModalProps {
@@ -20,8 +22,8 @@ interface CommentatorModalProps {
 }
 
 const CommentatorModal: React.FC<CommentatorModalProps> = ({ website, isOpen, onClose }) => {
-  // Mock comments data - in a real app, this would come from an API
-  const mockComments: Comment[] = [
+  const [newComment, setNewComment] = useState('');
+  const [comments, setComments] = useState<Comment[]>([
     {
       id: '1',
       reviewer: 'Sarah Johnson - Compliance Officer',
@@ -43,7 +45,22 @@ const CommentatorModal: React.FC<CommentatorModalProps> = ({ website, isOpen, on
       timestamp: '2 days ago',
       status: 'approved'
     }
-  ];
+  ]);
+
+  const handleSubmitComment = () => {
+    if (!newComment.trim()) return;
+
+    const comment: Comment = {
+      id: Date.now().toString(),
+      reviewer: 'Current User - Reviewer',
+      message: newComment.trim(),
+      timestamp: 'just now',
+      status: 'pending'
+    };
+
+    setComments(prev => [comment, ...prev]);
+    setNewComment('');
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -71,6 +88,11 @@ const CommentatorModal: React.FC<CommentatorModalProps> = ({ website, isOpen, on
     }
   };
 
+  const getInitials = (name: string) => {
+    const names = name.split(' ');
+    return names.length >= 2 ? names[0][0] + names[1][0] : names[0][0];
+  };
+
   if (!website) return null;
 
   return (
@@ -90,18 +112,53 @@ const CommentatorModal: React.FC<CommentatorModalProps> = ({ website, isOpen, on
           </button>
         </DialogHeader>
 
-        <div className="py-4 max-h-[500px] overflow-y-auto">
+        {/* Comment Input Section */}
+        <div className="py-4 border-b border-gray-200">
+          <div className="flex gap-3">
+            <Avatar className="w-8 h-8">
+              <AvatarFallback className="bg-icici-orange text-white text-sm">
+                CU
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Write your comment..."
+                className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-icici-orange focus:border-transparent"
+                rows={3}
+              />
+              <div className="flex justify-end mt-2">
+                <Button
+                  onClick={handleSubmitComment}
+                  disabled={!newComment.trim()}
+                  className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-4 py-2"
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  Submit Comment
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Comments List */}
+        <div className="py-4 max-h-[400px] overflow-y-auto">
           <div className="space-y-4">
-            {mockComments.length > 0 ? (
-              mockComments.map((comment) => (
+            {comments.length > 0 ? (
+              comments.map((comment) => (
                 <div key={comment.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                   <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-icici-orange rounded-full flex items-center justify-center">
-                        <span className="text-white text-sm font-semibold">
-                          {comment.reviewer.split(' ')[0][0]}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-8 h-8">
+                        {comment.avatar ? (
+                          <AvatarImage src={comment.avatar} alt={comment.reviewer} />
+                        ) : (
+                          <AvatarFallback className="bg-icici-orange text-white text-sm">
+                            {getInitials(comment.reviewer)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
                       <div>
                         <p className="font-medium text-gray-900">{comment.reviewer}</p>
                         <p className="text-sm text-gray-500">{comment.timestamp}</p>
@@ -111,7 +168,7 @@ const CommentatorModal: React.FC<CommentatorModalProps> = ({ website, isOpen, on
                       {getStatusLabel(comment.status)}
                     </span>
                   </div>
-                  <p className="text-gray-700 leading-relaxed">{comment.message}</p>
+                  <p className="text-gray-700 leading-relaxed ml-11">{comment.message}</p>
                 </div>
               ))
             ) : (

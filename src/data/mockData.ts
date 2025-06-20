@@ -4,74 +4,82 @@ import { Website } from '../components/WebsiteCard';
 export const mockWebsites: Website[] = [
   {
     id: '1',
-    name: 'ICICI Prudential Life',
-    description: 'Life insurance solutions for families and individuals',
-    content: 'Secure your family\'s future with our comprehensive life insurance plans. Our policies provide financial security and peace of mind for you and your loved ones. With flexible premium options and extensive coverage, we ensure your family\'s financial well-being even in your absence.',
-    status: 'active',
-    lastUpdated: '24/04/2024',
-    category: 'Insurance'
+    name: 'Personal Banking Portal',
+    description: 'Complete banking solution for individual customers with account management and transaction history.',
+    content: 'A comprehensive personal banking portal that allows customers to manage their accounts, view transaction history, transfer funds, and access various banking services. The portal features a modern, user-friendly interface with robust security measures.',
+    status: 'deployed',
+    lastUpdated: '15/06/2024',
+    category: 'Banking',
+    url: 'https://www.icicibank.com/personal-banking'
   },
   {
     id: '2',
-    name: 'ICICI Mutual Fund',
-    description: 'Investment solutions for wealth creation',
-    content: 'Explore our wide range of mutual fund investment options designed to help you achieve your financial goals. From equity funds to debt funds, SIP options to lump sum investments, we offer diversified portfolios managed by expert fund managers.',
-    status: 'pending',
-    lastUpdated: '22/04/2024',
-    category: 'Investments'
+    name: 'Corporate Investment Platform',
+    description: 'Advanced investment platform for corporate clients with portfolio management and analytics.',
+    content: 'Sophisticated investment platform designed for corporate clients, featuring advanced portfolio management tools, real-time market analytics, risk assessment capabilities, and comprehensive reporting dashboard.',
+    status: 'compliance-review',
+    lastUpdated: '14/06/2024',
+    category: 'Investment',
+    url: 'https://www.icicibank.com/corporate-banking'
   },
   {
     id: '3',
-    name: 'ICICI Lombard',
-    description: 'General insurance for comprehensive protection',
-    content: 'Get comprehensive insurance solutions for your needs including motor insurance, health insurance, travel insurance, and home insurance. Our policies are designed to provide maximum coverage at competitive premiums.',
-    status: 'active',
-    lastUpdated: '23/04/2024',
-    category: 'Insurance'
+    name: 'Mobile Banking App Landing',
+    description: 'Promotional landing page for the new mobile banking application with download links.',
+    content: 'Engaging landing page promoting the new mobile banking application. Features app screenshots, key benefits, security information, and direct download links for iOS and Android platforms.',
+    status: 'marketing-review',
+    lastUpdated: '13/06/2024',
+    category: 'Mobile',
+    url: 'https://www.icicibank.com/mobile-banking'
   },
   {
     id: '4',
-    name: 'ICICI Direct',
-    description: 'Online trading and investment platform',
-    content: 'Trade and invest online with our user-friendly platform offering real-time market data, research reports, and investment advisory services. Access equity, derivatives, commodities, and currency trading all in one place.',
-    status: 'active',
-    lastUpdated: '25/04/2024',
-    category: 'Trading'
+    name: 'Business Loan Calculator',
+    description: 'Interactive calculator for business loan EMI calculations and eligibility checks.',
+    content: 'User-friendly business loan calculator that helps customers calculate EMI amounts, check eligibility criteria, and understand various loan terms. Includes comparison tools and pre-qualification features.',
+    status: 'ready-to-deploy',
+    lastUpdated: '12/06/2024',
+    category: 'Loans',
+    url: 'https://www.icicibank.com/business-loans'
   },
   {
     id: '5',
-    name: 'ICICI Securities',
-    description: 'Financial services and investment banking',
-    content: 'Your trusted partner in financial and investment services offering portfolio management, wealth management, and corporate banking solutions. We provide personalized financial advice and investment strategies.',
-    status: 'active',
-    lastUpdated: '21/04/2024',
-    category: 'Financial Services'
+    name: 'Credit Card Offers Hub',
+    description: 'Centralized hub for all current credit card promotions and special offers.',
+    content: 'Comprehensive credit card offers hub showcasing current promotions, cashback deals, reward programs, and special discounts. Features detailed terms and conditions and easy application process.',
+    status: 'issue',
+    lastUpdated: '11/06/2024',
+    category: 'Credit Cards',
+    url: 'https://www.icicibank.com/credit-cards'
   },
   {
     id: '6',
-    name: 'ICICI Foundation',
-    description: 'Corporate social responsibility initiatives',
-    content: 'Empowering communities through our CSR initiatives focused on education, healthcare, rural development, and environmental sustainability. Join us in making a positive impact on society.',
-    status: 'pending',
-    lastUpdated: '20/04/2024',
-    category: 'CSR'
+    name: 'Insurance Portal Redesign',
+    description: 'Redesigned insurance portal with improved user experience and product comparison.',
+    content: 'Completely redesigned insurance portal featuring improved navigation, detailed product comparisons, premium calculators, and streamlined claim processes. Enhanced mobile responsiveness and accessibility.',
+    status: 'draft',
+    lastUpdated: '10/06/2024',
+    category: 'Insurance',
+    url: 'https://www.icicibank.com/insurance'
   },
   {
     id: '7',
-    name: 'ICICI Venture',
-    description: 'Venture capital and private equity',
-    content: 'Discover investment opportunities with our venture capital and private equity services. We partner with innovative startups and established businesses to fuel growth and create value.',
-    status: 'draft',
-    lastUpdated: '19/04/2024',
-    category: 'Venture Capital'
+    name: 'NRI Banking Services',
+    description: 'Specialized banking services portal for Non-Resident Indian customers.',
+    content: 'Dedicated portal for NRI banking services including NRE/NRO accounts, remittance services, investment options, and specialized customer support. Features currency conversion tools and international transfer capabilities.',
+    status: 'compliance-review',
+    lastUpdated: '09/06/2024',
+    category: 'NRI Services',
+    url: 'https://www.icicibank.com/nri-banking'
   },
   {
     id: '8',
-    name: 'ICICI Bank Credit Cards',
-    description: 'Premium credit card solutions',
-    content: 'Experience the convenience of our premium credit cards with exclusive rewards, cashback offers, and lifestyle benefits. Choose from a range of cards designed for different spending patterns and preferences.',
-    status: 'active',
-    lastUpdated: '26/04/2024',
-    category: 'Banking'
+    name: 'Digital Fixed Deposits',
+    description: 'Online platform for opening and managing fixed deposit accounts digitally.',
+    content: 'Streamlined digital platform for fixed deposit management featuring online account opening, interest rate calculators, maturity trackers, and automated renewal options. Includes comparison tools and investment advice.',
+    status: 'deployed',
+    lastUpdated: '08/06/2024',
+    category: 'Investments',
+    url: 'https://www.icicibank.com/fixed-deposits'
   }
 ];
