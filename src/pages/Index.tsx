@@ -1,9 +1,9 @@
-
 import React, { useState, useMemo } from 'react';
 import Header from '../components/Header';
 import FilterBar from '../components/FilterBar';
 import WebsiteCard, { Website } from '../components/WebsiteCard';
 import EditModal from '../components/EditModal';
+import CommentatorModal from '../components/CommentatorModal';
 import Toast from '../components/Toast';
 import LoadingCard from '../components/LoadingCard';
 import { mockWebsites } from '../data/mockData';
@@ -15,6 +15,7 @@ const Index = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
@@ -42,6 +43,11 @@ const Index = () => {
   const handleEdit = (website: Website) => {
     setSelectedWebsite(website);
     setIsModalOpen(true);
+  };
+
+  const handleViewComments = (website: Website) => {
+    setSelectedWebsite(website);
+    setIsCommentsModalOpen(true);
   };
 
   const handleSave = (website: Website, newContent: string) => {
@@ -141,6 +147,7 @@ const Index = () => {
                 key={website.id}
                 website={website}
                 onEdit={handleEdit}
+                onViewComments={handleViewComments}
                 viewMode={viewMode}
               />
             ))}
@@ -153,6 +160,12 @@ const Index = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
+      />
+
+      <CommentatorModal
+        website={selectedWebsite}
+        isOpen={isCommentsModalOpen}
+        onClose={() => setIsCommentsModalOpen(false)}
       />
 
       <Toast

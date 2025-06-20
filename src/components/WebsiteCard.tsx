@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { InfoIcon } from 'lucide-react';
+import { InfoIcon, MessageSquare } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -23,10 +22,11 @@ export interface Website {
 interface WebsiteCardProps {
   website: Website;
   onEdit: (website: Website) => void;
+  onViewComments: (website: Website) => void;
   viewMode: 'grid' | 'list';
 }
 
-const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, viewMode }) => {
+const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewComments, viewMode }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -78,7 +78,15 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, viewMode }) 
             <p className="text-sm text-gray-600 mb-2">{website.description}</p>
             <p className="text-sm text-gray-500 line-clamp-2">{website.content}</p>
           </div>
-          <div className="ml-4">
+          <div className="ml-4 flex gap-2">
+            <Button
+              onClick={() => onViewComments(website)}
+              variant="outline"
+              className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+            >
+              <MessageSquare className="h-4 w-4 mr-1" />
+              Comments
+            </Button>
             <Button
               onClick={() => onEdit(website)}
               className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-6 py-2 rounded-md transition-colors duration-200"
@@ -129,12 +137,21 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, viewMode }) 
         <span className="text-xs text-gray-400">
           Updated: {website.lastUpdated}
         </span>
-        <Button
-          onClick={() => onEdit(website)}
-          className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-4 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
-        >
-          EDIT
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => onViewComments(website)}
+            variant="outline"
+            className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
+          >
+            <MessageSquare className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={() => onEdit(website)}
+            className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-4 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
+          >
+            EDIT
+          </Button>
+        </div>
       </div>
     </div>
   );
