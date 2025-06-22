@@ -9,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export interface Website {
   id: string;
@@ -32,6 +33,7 @@ interface WebsiteCardProps {
 const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewComments, onDownload, viewMode }) => {
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [thumbnailLoading, setThumbnailLoading] = useState(true);
+  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchThumbnail = async () => {
@@ -101,167 +103,229 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
     }
   };
 
-  const handleNoCodeEdit = () => {
-    // Open no-code editor in a new window/tab
-    const noCodeUrl = `https://editor.lovable.dev/project/${website.name.toLowerCase().replace(/\s+/g, '-')}`;
-    window.open(noCodeUrl, '_blank');
+  const handleEditClick = () => {
+    setIsUrlModalOpen(true);
   };
 
   if (viewMode === 'list') {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-icici-orange/50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-start gap-4 flex-1">
-            <div className="flex-shrink-0">
-              {thumbnailLoading ? (
-                <div className="w-20 h-16 bg-gray-200 rounded animate-pulse"></div>
-              ) : (
-                <img 
-                  src={thumbnailUrl || '/placeholder.svg'} 
-                  alt={`${website.name} thumbnail`}
-                  className="w-20 h-16 object-cover rounded border"
-                  onError={(e) => {
-                    e.currentTarget.src = '/placeholder.svg';
-                  }}
-                />
-              )}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-lg font-semibold text-icici-darkGray">{website.name}</h3>
-                <Badge className={`text-xs ${getStatusColor(website.status)}`}>
-                  {getStatusLabel(website.status)}
-                </Badge>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <InfoIcon className="h-4 w-4 text-gray-400" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-sm">Category: {website.category}</p>
-                      <p className="text-sm">Last updated: {website.lastUpdated}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+      <>
+        <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-icici-orange/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-start gap-4 flex-1">
+              <div className="flex-shrink-0">
+                {thumbnailLoading ? (
+                  <div className="w-20 h-16 bg-gray-200 rounded animate-pulse"></div>
+                ) : (
+                  <img 
+                    src={thumbnailUrl || '/placeholder.svg'} 
+                    alt={`${website.name} thumbnail`}
+                    className="w-20 h-16 object-cover rounded border"
+                    onError={(e) => {
+                      e.currentTarget.src = '/placeholder.svg';
+                    }}
+                  />
+                )}
               </div>
-              <p className="text-sm text-gray-600 mb-2">{website.description}</p>
-              <p className="text-sm text-gray-500 line-clamp-2">{website.content}</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="text-lg font-semibold text-icici-darkGray">{website.name}</h3>
+                  <Badge className={`text-xs ${getStatusColor(website.status)}`}>
+                    {getStatusLabel(website.status)}
+                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <InfoIcon className="h-4 w-4 text-gray-400" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-sm">Category: {website.category}</p>
+                        <p className="text-sm">Last updated: {website.lastUpdated}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <p className="text-sm text-gray-600 mb-2">{website.description}</p>
+              </div>
+            </div>
+            <div className="ml-4 flex gap-2">
+              <Button
+                onClick={() => onDownload(website)}
+                variant="outline"
+                className="border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Download
+              </Button>
+              <Button
+                onClick={() => onViewComments(website)}
+                variant="outline"
+                className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+              >
+                <MessageSquare className="h-4 w-4 mr-1" />
+                Comments
+              </Button>
+              <Button
+                onClick={handleEditClick}
+                className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-6 py-2 rounded-md transition-colors duration-200"
+              >
+                EDIT
+              </Button>
             </div>
           </div>
-          <div className="ml-4 flex gap-2">
+        </div>
+
+        <Dialog open={isUrlModalOpen} onOpenChange={setIsUrlModalOpen}>
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-icici-darkGray">
+                Edit Website - {website.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="mb-4">
+                <iframe
+                  src={website.url}
+                  className="w-full h-96 border border-gray-300 rounded"
+                  title={`Preview of ${website.name}`}
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsUrlModalOpen(false)}
+                  className="px-6 py-2 border-gray-300 hover:bg-gray-50"
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={() => {
+                    onEdit(website);
+                    setIsUrlModalOpen(false);
+                  }}
+                  className="px-6 py-2 bg-icici-orange hover:bg-icici-red text-white font-semibold"
+                >
+                  Edit Content
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-icici-orange/50 hover:-translate-y-1 group">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-semibold text-icici-darkGray group-hover:text-icici-red transition-colors">
+                {website.name}
+              </h3>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <InfoIcon className="h-4 w-4 text-gray-400" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">Category: {website.category}</p>
+                    <p className="text-sm">Last updated: {website.lastUpdated}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <Badge className={`text-xs mb-3 ${getStatusColor(website.status)}`}>
+              {getStatusLabel(website.status)}
+            </Badge>
+          </div>
+        </div>
+
+        {/* Thumbnail Image with 2:3 aspect ratio */}
+        <div className="mb-4 aspect-[2/3] w-full">
+          {thumbnailLoading ? (
+            <div className="w-full h-full bg-gray-200 rounded animate-pulse"></div>
+          ) : (
+            <img 
+              src={thumbnailUrl || '/placeholder.svg'} 
+              alt={`${website.name} thumbnail`}
+              className="w-full h-full object-cover rounded border"
+              onError={(e) => {
+                e.currentTarget.src = '/placeholder.svg';
+              }}
+            />
+          )}
+        </div>
+
+        <p className="text-sm text-gray-600 mb-3">{website.description}</p>
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-400">
+            Updated: {website.lastUpdated}
+          </span>
+          <div className="flex gap-2">
             <Button
               onClick={() => onDownload(website)}
               variant="outline"
-              className="border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+              className="border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
             >
-              <Download className="h-4 w-4 mr-1" />
-              Download
+              <Download className="h-4 w-4" />
             </Button>
             <Button
               onClick={() => onViewComments(website)}
               variant="outline"
-              className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+              className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
             >
-              <MessageSquare className="h-4 w-4 mr-1" />
-              Comments
+              <MessageSquare className="h-4 w-4" />
             </Button>
             <Button
-              onClick={handleNoCodeEdit}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
-            >
-              <Edit className="h-4 w-4 mr-1" />
-              No-Code Edit
-            </Button>
-            <Button
-              onClick={() => onEdit(website)}
-              className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-6 py-2 rounded-md transition-colors duration-200"
+              onClick={handleEditClick}
+              className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-4 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
             >
               EDIT
             </Button>
           </div>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-icici-orange/50 hover:-translate-y-1 group">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold text-icici-darkGray group-hover:text-icici-red transition-colors">
-              {website.name}
-            </h3>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <InfoIcon className="h-4 w-4 text-gray-400" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-sm">Category: {website.category}</p>
-                  <p className="text-sm">Last updated: {website.lastUpdated}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+      <Dialog open={isUrlModalOpen} onOpenChange={setIsUrlModalOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-icici-darkGray">
+              Edit Website - {website.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="mb-4">
+              <iframe
+                src={website.url}
+                className="w-full h-96 border border-gray-300 rounded"
+                title={`Preview of ${website.name}`}
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsUrlModalOpen(false)}
+                className="px-6 py-2 border-gray-300 hover:bg-gray-50"
+              >
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  onEdit(website);
+                  setIsUrlModalOpen(false);
+                }}
+                className="px-6 py-2 bg-icici-orange hover:bg-icici-red text-white font-semibold"
+              >
+                Edit Content
+              </Button>
+            </div>
           </div>
-          <Badge className={`text-xs mb-3 ${getStatusColor(website.status)}`}>
-            {getStatusLabel(website.status)}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Thumbnail Image */}
-      <div className="mb-4">
-        {thumbnailLoading ? (
-          <div className="w-full h-32 bg-gray-200 rounded animate-pulse"></div>
-        ) : (
-          <img 
-            src={thumbnailUrl || '/placeholder.svg'} 
-            alt={`${website.name} thumbnail`}
-            className="w-full h-32 object-cover rounded border"
-            onError={(e) => {
-              e.currentTarget.src = '/placeholder.svg';
-            }}
-          />
-        )}
-      </div>
-
-      <p className="text-sm text-gray-600 mb-3">{website.description}</p>
-
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-400">
-          Updated: {website.lastUpdated}
-        </span>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => onDownload(website)}
-            variant="outline"
-            className="border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={() => onViewComments(website)}
-            variant="outline"
-            className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
-          >
-            <MessageSquare className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={handleNoCodeEdit}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={() => onEdit(website)}
-            className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-4 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
-          >
-            EDIT
-          </Button>
-        </div>
-      </div>
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
