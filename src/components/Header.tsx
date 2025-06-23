@@ -24,7 +24,7 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <img
-              src="https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=120&h=60&fit=crop&crop=center"
+              src="LOGO.png"
               alt="ICICI Prudential Mutual Fund"
               className="h-8 w-auto object-contain"
             />

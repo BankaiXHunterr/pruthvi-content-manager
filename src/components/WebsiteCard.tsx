@@ -15,7 +15,7 @@ export interface Website {
   name: string;
   description: string;
   content: string;
-  status: 'draft' | 'marketing-review' | 'compliance-review' | 'ready-to-deploy' | 'deployed' | 'issue';
+  status: 'draft' | 'marketing-review' | 'compliance-review' | 'ready-to-deploy' | 'deployed' | 'issue' | 'in-progress';
   lastUpdated: string;
   category: string;
   url?: string;
@@ -74,6 +74,8 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
       case 'marketing-review':
       case 'compliance-review':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'in-progress':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'draft':
         return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'issue':
@@ -97,6 +99,8 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
         return 'Draft';
       case 'issue':
         return 'Issue with Comment';
+      case "in-progress":
+        return 'In progress'
       default:
         return 'Unknown';
     }
