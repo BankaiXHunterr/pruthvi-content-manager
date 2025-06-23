@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { InfoIcon, MessageSquare, Download, Edit } from 'lucide-react';
+import { InfoIcon, MessageSquare, Download, Edit, Trash2 } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -27,10 +27,11 @@ interface WebsiteCardProps {
   onEdit: (website: Website) => void;
   onViewComments: (website: Website) => void;
   onDownload: (website: Website) => void;
+  onDelete: (website: Website) => void;
   viewMode: 'grid' | 'list';
 }
 
-const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewComments, onDownload, viewMode }) => {
+const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewComments, onDownload, onDelete, viewMode }) => {
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [thumbnailLoading, setThumbnailLoading] = useState(true);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -116,6 +117,12 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
     setIsPreviewModalOpen(true);
   };
 
+  const handleDeleteClick = () => {
+    if (window.confirm(`Are you sure you want to delete "${website.name}"? This action cannot be undone.`)) {
+      onDelete(website);
+    }
+  };
+
   if (viewMode === 'list') {
     return (
       <>
@@ -184,6 +191,13 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
                 className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-6 py-2 rounded-md transition-colors duration-200"
               >
                 EDIT
+              </Button>
+              <Button
+                onClick={handleDeleteClick}
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+              >
+                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -268,6 +282,14 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
               {getStatusLabel(website.status)}
             </Badge>
           </div>
+          <Button
+            onClick={handleDeleteClick}
+            variant="outline"
+            size="sm"
+            className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-800 transition-colors duration-200"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Thumbnail Image with smaller aspect ratio */}

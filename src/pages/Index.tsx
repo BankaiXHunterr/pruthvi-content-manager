@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useEffect } from 'react';
 import Header from '../components/Header';
 import FilterBar from '../components/FilterBar';
 import WebsiteCard, { Website } from '../components/WebsiteCard';
@@ -8,9 +9,10 @@ import CreateModal from '../components/CreateModal';
 import Toast from '../components/Toast';
 import LoadingCard from '../components/LoadingCard';
 import { mockWebsites } from '../data/mockData';
+import { StorageUtils } from '../utils/storage';
 
 const Index = () => {
-  const [websites, setWebsites] = useState<Website[]>(mockWebsites);
+  const [websites, setWebsites] = useState<Website[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -28,6 +30,34 @@ const Index = () => {
     type: 'success',
     isVisible: false
   });
+
+  // Load websites from localStorage on component mount
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      const savedWebsites = StorageUtils.loadWebsites();
+      if (savedWebsites.length > 0) {
+        // Update comment counts for existing websites
+        const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(savedWebsites);
+        setWebsites(websitesWithComments);
+      } else {
+        // First time loading, use mock data
+        const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(mockWebsites);
+        setWebsites(websitesWithComments);
+        StorageUtils.saveWebsites(websitesWithComments);
+      }
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Save websites to localStorage whenever websites state changes
+  useEffect(() => {
+    if (websites.length > 0) {
+      StorageUtils.saveWebsites(websites);
+    }
+  }, [websites]);
 
   // Filter websites based on search and status
   const filteredWebsites = useMemo(() => {
@@ -50,6 +80,11 @@ const Index = () => {
   const handleViewComments = (website: Website) => {
     setSelectedWebsite(website);
     setIsCommentsModalOpen(true);
+  };
+
+  const handleDelete = (website: Website) => {
+    setWebsites(prev => prev.filter(w => w.id !== website.id));
+    showToast(`Project "${website.name}" deleted successfully`, 'success');
   };
 
   const handleDownload = (website: Website) => {
@@ -111,15 +146,13 @@ const Index = () => {
     setToast(prev => ({ ...prev, isVisible: false }));
   };
 
-  // Simulate loading state
-  React.useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
+  // Update comment counts when comments modal closes
+  const handleCommentsModalClose = () => {
+    setIsCommentsModalOpen(false);
+    // Update comment counts for all websites
+    const updatedWebsites = StorageUtils.updateWebsiteCommentCounts(websites);
+    setWebsites(updatedWebsites);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -187,6 +220,7 @@ const Index = () => {
                 onEdit={handleEdit}
                 onViewComments={handleViewComments}
                 onDownload={handleDownload}
+                onDelete={handleDelete}
                 viewMode={viewMode}
               />
             ))}
@@ -204,7 +238,7 @@ const Index = () => {
       <CommentatorModal
         website={selectedWebsite}
         isOpen={isCommentsModalOpen}
-        onClose={() => setIsCommentsModalOpen(false)}
+        onClose={handleCommentsModalClose}
       />
 
       <CreateModal

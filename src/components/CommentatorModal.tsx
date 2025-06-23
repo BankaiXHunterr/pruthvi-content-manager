@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquare, X, Send, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Website } from './WebsiteCard';
 
 interface Comment {
   id: string;
+  projectId: string;
   reviewer: string;
   message: string;
   timestamp: string;
@@ -23,42 +24,66 @@ interface CommentatorModalProps {
 
 const CommentatorModal: React.FC<CommentatorModalProps> = ({ website, isOpen, onClose }) => {
   const [newComment, setNewComment] = useState('');
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      id: '1',
-      reviewer: 'Sarah Johnson - Compliance Officer',
-      message: 'The marketing claims need to be verified with our legal team. Please ensure all statistics mentioned are backed by recent data.',
-      timestamp: '2 hours ago',
-      status: 'needs-revision'
-    },
-    {
-      id: '2',
-      reviewer: 'Michael Chen - Senior Reviewer',
-      message: 'Content looks good overall. Minor suggestion: consider adding a disclaimer about market risks in the investment section.',
-      timestamp: '1 day ago',
-      status: 'approved'
-    },
-    {
-      id: '3',
-      reviewer: 'Priya Sharma - Legal Team',
-      message: 'All regulatory requirements have been met. Ready for publication once the revision is complete.',
-      timestamp: '2 days ago',
-      status: 'approved'
+  const [comments, setComments] = useState<Comment[]>([]);
+
+  // Load comments from localStorage when modal opens or website changes
+  useEffect(() => {
+    if (website) {
+      const savedComments = localStorage.getItem('projectComments');
+      if (savedComments) {
+        const allComments: Comment[] = JSON.parse(savedComments);
+        const projectComments = allComments.filter(comment => comment.projectId === website.id);
+        setComments(projectComments);
+      } else {
+        // Initialize with default comments for demo purposes
+        const defaultComments: Comment[] = [
+          {
+            id: '1',
+            projectId: website.id,
+            reviewer: 'Sarah Johnson - Compliance Officer',
+            message: 'The marketing claims need to be verified with our legal team. Please ensure all statistics mentioned are backed by recent data.',
+            timestamp: '2 hours ago',
+            status: 'needs-revision'
+          },
+          {
+            id: '2',
+            projectId: website.id,
+            reviewer: 'Michael Chen - Senior Reviewer',
+            message: 'Content looks good overall. Minor suggestion: consider adding a disclaimer about market risks in the investment section.',
+            timestamp: '1 day ago',
+            status: 'approved'
+          }
+        ];
+        setComments(defaultComments);
+        // Save to localStorage
+        localStorage.setItem('projectComments', JSON.stringify(defaultComments));
+      }
     }
-  ]);
+  }, [website]);
 
   const handleSubmitComment = () => {
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !website) return;
 
     const comment: Comment = {
       id: Date.now().toString(),
+      projectId: website.id,
       reviewer: 'Current User - Reviewer',
       message: newComment.trim(),
       timestamp: 'just now',
       status: 'pending'
     };
 
-    setComments(prev => [comment, ...prev]);
+    // Update local state
+    const updatedComments = [comment, ...comments];
+    setComments(updatedComments);
+
+    // Update localStorage with all comments
+    const savedComments = localStorage.getItem('projectComments');
+    const allComments: Comment[] = savedComments ? JSON.parse(savedComments) : [];
+    const otherProjectComments = allComments.filter(c => c.projectId !== website.id);
+    const newAllComments = [...otherProjectComments, ...updatedComments];
+    localStorage.setItem('projectComments', JSON.stringify(newAllComments));
+
     setNewComment('');
   };
 
@@ -103,13 +128,6 @@ const CommentatorModal: React.FC<CommentatorModalProps> = ({ website, isOpen, on
             <MessageSquare className="h-5 w-5 text-icici-orange" />
             Compliance Comments – {website.name}
           </DialogTitle>
-          <button
-            onClick={onClose}
-            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </button>
         </DialogHeader>
 
         {/* Comment Input Section */}
@@ -175,7 +193,7 @@ const CommentatorModal: React.FC<CommentatorModalProps> = ({ website, isOpen, on
               <div className="text-center py-8">
                 <MessageSquare className="mx-auto h-12 w-12 text-gray-400 mb-3" />
                 <h3 className="text-lg font-medium text-gray-900 mb-1">No comments yet</h3>
-                <p className="text-gray-500">This content hasn't received any compliance comments.</p>
+                <p className="text-gray-500">This project hasn't received any compliance comments.</p>
               </div>
             )}
           </div>
