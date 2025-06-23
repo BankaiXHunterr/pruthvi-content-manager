@@ -4,23 +4,23 @@ import { Website } from '../components/WebsiteCard';
 export const mockWebsites: Website[] = [
   {
     id: '1',
-    name: 'Personal Banking Portal',
+    name: 'Brobot Search Page',
     description:'',
     content: 'A comprehensive personal banking portal that allows customers to manage their accounts, view transaction history, transfer funds, and access various banking services. The portal features a modern, user-friendly interface with robust security measures.',
     status: 'deployed',
     lastUpdated: '15/06/2024',
     category: 'Banking',
-    url: 'https://https://www.icicipruamc.com'
+    url: 'http://www.udemy.com/'
   },
   {
     id: '2',
-    name: 'Corporate Investment Platform',
+    name: 'Bluechip Fund Landing Page',
     description: '',
     content: 'Sophisticated investment platform designed for corporate clients, featuring advanced portfolio management tools, real-time market analytics, risk assessment capabilities, and comprehensive reporting dashboard.',
     status: 'compliance-review',
     lastUpdated: '14/06/2024',
     category: 'Investment',
-    url: 'https://www.icicibank.com/corporate-banking'
+    url: 'Retirement Plan Landing Page'
   },
   {
     id: '3',
@@ -30,6 +30,6 @@ export const mockWebsites: Website[] = [
     status: 'marketing-review',
     lastUpdated: '13/06/2024',
     category: 'Mobile',
-    url: 'https://www.icicibank.com/mobile-banking'
+    url: 'http://www.icicibank.com/mobile-banking'
   },
 ];

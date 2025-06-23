@@ -51,7 +51,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
           setThumbnailUrl(data.hybridGraph.image);
         } else {
           // Fallback to Puppeteer screenshot API
-          const screenshotUrl = `https://api.screenshotlayer.com/api/capture?access_key=your-api-key&url=${encodeURIComponent(website.url)}&width=400&viewport=1440x900&format=PNG`;
+          const screenshotUrl = `http://api.screenshotlayer.com/api/capture?access_key=yYEZuW57h6wUhgxSseS3m7Y71SUsnLmx&url=${encodeURIComponent(website.url)}&viewport=1440x900&format=PNG`;
           setThumbnailUrl(screenshotUrl);
         }
       } catch (error) {
@@ -243,7 +243,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
         </div>
 
         {/* Thumbnail Image with 2:3 aspect ratio */}
-        <div className="mb-4 aspect-[2/3] w-full">
+        <div className="mb-4 aspect-[1] w-full">
           {thumbnailLoading ? (
             <div className="w-full h-full bg-gray-200 rounded animate-pulse"></div>
           ) : (

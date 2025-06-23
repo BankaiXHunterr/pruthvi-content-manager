@@ -37,9 +37,7 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
           <h1 className="text-lg lg:text-xl font-semibold text-icici-darkGray text-center">
             ICICI Prudential Marketing Content Management
           </h1>
-          <p className="text-sm text-gray-600 text-center mt-1">
-            Manage and update marketing content across ICICI platforms.
-          </p>
+
         </div>
 
         {/* Right - User Menu */}
