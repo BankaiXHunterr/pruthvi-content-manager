@@ -19,6 +19,7 @@ export interface Website {
   lastUpdated: string;
   category: string;
   url?: string;
+  commentCount?: number;
 }
 
 interface WebsiteCardProps {
@@ -32,7 +33,7 @@ interface WebsiteCardProps {
 const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewComments, onDownload, viewMode }) => {
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [thumbnailLoading, setThumbnailLoading] = useState(true);
-  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchThumbnail = async () => {
@@ -42,16 +43,21 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
       }
 
       try {
-        // First try to get OpenGraph image
-        const response = await fetch(`https://api.opengraph.io/v1/site/${encodeURIComponent(website.url)}?app_id=your-app-id`);
-        const data = await response.json();
-        
-        if (data?.hybridGraph?.image) {
-          setThumbnailUrl(data.hybridGraph.image);
+        // If the URL is a data URL (uploaded image), use it directly
+        if (website.url.startsWith('data:')) {
+          setThumbnailUrl(website.url);
         } else {
-          // Fallback to Puppeteer screenshot API
-          const screenshotUrl = `http://api.screenshotlayer.com/api/capture?access_key=yYEZuW57h6wUhgxSseS3m7Y71SUsnLmx&url=${encodeURIComponent(website.url)}&viewport=1440x900&format=PNG`;
-          setThumbnailUrl(screenshotUrl);
+          // Try to get OpenGraph image
+          const response = await fetch(`https://api.opengraph.io/v1/site/${encodeURIComponent(website.url)}?app_id=your-app-id`);
+          const data = await response.json();
+          
+          if (data?.hybridGraph?.image) {
+            setThumbnailUrl(data.hybridGraph.image);
+          } else {
+            // Fallback to Puppeteer screenshot API
+            const screenshotUrl = `http://api.screenshotlayer.com/api/capture?access_key=yYEZuW57h6wUhgxSseS3m7Y71SUsnLmx&url=${encodeURIComponent(website.url)}&viewport=1440x900&format=PNG`;
+            setThumbnailUrl(screenshotUrl);
+          }
         }
       } catch (error) {
         console.log('Error fetching thumbnail:', error);
@@ -107,7 +113,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
   };
 
   const handleEditClick = () => {
-    setIsUrlModalOpen(true);
+    setIsPreviewModalOpen(true);
   };
 
   if (viewMode === 'list') {
@@ -167,6 +173,11 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
               >
                 <MessageSquare className="h-4 w-4 mr-1" />
                 Comments
+                {website.commentCount && website.commentCount > 0 && (
+                  <span className="ml-1 bg-icici-orange text-white text-xs rounded-full px-2 py-0.5">
+                    {website.commentCount}
+                  </span>
+                )}
               </Button>
               <Button
                 onClick={handleEditClick}
@@ -178,7 +189,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
           </div>
         </div>
 
-        <Dialog open={isUrlModalOpen} onOpenChange={setIsUrlModalOpen}>
+        <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
           <DialogContent className="sm:max-w-[800px] max-h-[90vh] bg-white">
             <DialogHeader>
               <DialogTitle className="text-xl font-semibold text-icici-darkGray">
@@ -187,16 +198,30 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
             </DialogHeader>
             <div className="py-4">
               <div className="mb-4">
-                <iframe
-                  src={website.url}
-                  className="w-full h-96 border border-gray-300 rounded"
-                  title={`Preview of ${website.name}`}
-                />
+                {website.url && !website.url.startsWith('data:') ? (
+                  <iframe
+                    src={website.url}
+                    className="w-full h-96 border border-gray-300 rounded"
+                    title={`Preview of ${website.name}`}
+                  />
+                ) : (
+                  <div className="w-full h-96 border border-gray-300 rounded flex items-center justify-center bg-gray-50">
+                    {thumbnailUrl ? (
+                      <img 
+                        src={thumbnailUrl} 
+                        alt={website.name}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    ) : (
+                      <p className="text-gray-500">No preview available</p>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex justify-end gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => setIsUrlModalOpen(false)}
+                  onClick={() => setIsPreviewModalOpen(false)}
                   className="px-6 py-2 border-gray-300 hover:bg-gray-50"
                 >
                   Close
@@ -204,7 +229,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
                 <Button
                   onClick={() => {
                     onEdit(website);
-                    setIsUrlModalOpen(false);
+                    setIsPreviewModalOpen(false);
                   }}
                   className="px-6 py-2 bg-icici-orange hover:bg-icici-red text-white font-semibold"
                 >
@@ -278,9 +303,14 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
             <Button
               onClick={() => onViewComments(website)}
               variant="outline"
-              className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
+              className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md relative"
             >
               <MessageSquare className="h-4 w-4" />
+              {website.commentCount && website.commentCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                  {website.commentCount}
+                </span>
+              )}
             </Button>
             <Button
               onClick={handleEditClick}
@@ -292,7 +322,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
         </div>
       </div>
 
-      <Dialog open={isUrlModalOpen} onOpenChange={setIsUrlModalOpen}>
+      <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-icici-darkGray">
@@ -301,16 +331,30 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
           </DialogHeader>
           <div className="py-4">
             <div className="mb-4">
-              <iframe
-                src={website.url}
-                className="w-full h-96 border border-gray-300 rounded"
-                title={`Preview of ${website.name}`}
-              />
+              {website.url && !website.url.startsWith('data:') ? (
+                <iframe
+                  src={website.url}
+                  className="w-full h-96 border border-gray-300 rounded"
+                  title={`Preview of ${website.name}`}
+                />
+              ) : (
+                <div className="w-full h-96 border border-gray-300 rounded flex items-center justify-center bg-gray-50">
+                  {thumbnailUrl ? (
+                    <img 
+                      src={thumbnailUrl} 
+                      alt={website.name}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <p className="text-gray-500">No preview available</p>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-3">
               <Button
                 variant="outline"
-                onClick={() => setIsUrlModalOpen(false)}
+                onClick={() => setIsPreviewModalOpen(false)}
                 className="px-6 py-2 border-gray-300 hover:bg-gray-50"
               >
                 Close
@@ -318,7 +362,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
               <Button
                 onClick={() => {
                   onEdit(website);
-                  setIsUrlModalOpen(false);
+                  setIsPreviewModalOpen(false);
                 }}
                 className="px-6 py-2 bg-icici-orange hover:bg-icici-red text-white font-semibold"
               >

@@ -4,6 +4,7 @@ import FilterBar from '../components/FilterBar';
 import WebsiteCard, { Website } from '../components/WebsiteCard';
 import EditModal from '../components/EditModal';
 import CommentatorModal from '../components/CommentatorModal';
+import CreateModal from '../components/CreateModal';
 import Toast from '../components/Toast';
 import LoadingCard from '../components/LoadingCard';
 import { mockWebsites } from '../data/mockData';
@@ -16,6 +17,7 @@ const Index = () => {
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
@@ -86,6 +88,17 @@ const Index = () => {
     showToast(`Content updated successfully for ${website.name}`, 'success');
   };
 
+  const handleCreateProject = (newWebsite: Omit<Website, 'id'>) => {
+    const website: Website = {
+      ...newWebsite,
+      id: Date.now().toString(),
+      commentCount: 0
+    };
+    
+    setWebsites(prev => [website, ...prev]);
+    showToast(`Project "${website.name}" created successfully`, 'success');
+  };
+
   const handleLogout = () => {
     showToast('Logged out successfully', 'success');
   };
@@ -119,6 +132,7 @@ const Index = () => {
         onStatusChange={setStatusFilter}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        onCreateClick={() => setIsCreateModalOpen(true)}
       />
 
       <main className="px-4 py-6 lg:px-6">
@@ -191,6 +205,12 @@ const Index = () => {
         website={selectedWebsite}
         isOpen={isCommentsModalOpen}
         onClose={() => setIsCommentsModalOpen(false)}
+      />
+
+      <CreateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSave={handleCreateProject}
       />
 
       <Toast
