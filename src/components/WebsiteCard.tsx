@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -115,12 +114,12 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
             <div className="flex items-start gap-4 flex-1">
               <div className="flex-shrink-0">
                 {thumbnailLoading ? (
-                  <div className="w-20 h-16 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="w-16 h-12 bg-gray-200 rounded animate-pulse"></div>
                 ) : (
                   <img 
                     src={thumbnailUrl || '/placeholder.svg'} 
                     alt={`${website.name} thumbnail`}
-                    className="w-20 h-16 object-cover rounded border"
+                    className="w-16 h-12 object-cover rounded border"
                     onError={(e) => {
                       e.currentTarget.src = '/placeholder.svg';
                     }}
@@ -242,8 +241,8 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
           </div>
         </div>
 
-        {/* Thumbnail Image with 2:3 aspect ratio */}
-        <div className="mb-4 aspect-[1] w-full">
+        {/* Thumbnail Image with smaller aspect ratio */}
+        <div className="mb-4 aspect-[4/3] w-full">
           {thumbnailLoading ? (
             <div className="w-full h-full bg-gray-200 rounded animate-pulse"></div>
           ) : (

@@ -23,12 +23,11 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
         {/* Left - Logo */}
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-icici-orange to-icici-red rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">i</span>
-            </div>
-            <span className="hidden sm:block text-xl font-bold text-icici-darkGray">
-              ICICI BANK
-            </span>
+            <img
+              src="https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=120&h=60&fit=crop&crop=center"
+              alt="ICICI Prudential Mutual Fund"
+              className="h-8 w-auto object-contain"
+            />
           </div>
         </div>
 
@@ -37,7 +36,6 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
           <h1 className="text-lg lg:text-xl font-semibold text-icici-darkGray text-center">
             ICICI Prudential Marketing Content Management
           </h1>
-
         </div>
 
         {/* Right - User Menu */}
@@ -89,9 +87,6 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
         <h1 className="text-lg font-semibold text-icici-darkGray">
           Content Management
         </h1>
-        <p className="text-sm text-gray-600">
-          Manage marketing content across platforms
-        </p>
       </div>
     </header>
   );
