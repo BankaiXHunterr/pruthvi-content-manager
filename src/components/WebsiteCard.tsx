@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { InfoIcon, MessageSquare, Download, Edit } from 'lucide-react';
+import { InfoIcon, MessageSquare, Download, Edit, Trash2 } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -19,6 +19,8 @@ export interface Website {
   lastUpdated: string;
   category: string;
   url?: string;
+  commentCount?: number;
+  thumbailUrl?: string;
 }
 
 interface WebsiteCardProps {
@@ -26,33 +28,43 @@ interface WebsiteCardProps {
   onEdit: (website: Website) => void;
   onViewComments: (website: Website) => void;
   onDownload: (website: Website) => void;
+  onDelete: (website: Website) => void;
   viewMode: 'grid' | 'list';
 }
 
-const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewComments, onDownload, viewMode }) => {
+const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewComments, onDownload, onDelete, viewMode }) => {
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [thumbnailLoading, setThumbnailLoading] = useState(true);
-  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchThumbnail = async () => {
-      if (!website.url) {
+      if (!website.thumbailUrl) {
         setThumbnailLoading(false);
         return;
       }
 
       try {
-        // First try to get OpenGraph image
-        const response = await fetch(`https://api.opengraph.io/v1/site/${encodeURIComponent(website.url)}?app_id=your-app-id`);
-        const data = await response.json();
-        
-        if (data?.hybridGraph?.image) {
-          setThumbnailUrl(data.hybridGraph.image);
-        } else {
-          // Fallback to Puppeteer screenshot API
-          const screenshotUrl = `http://api.screenshotlayer.com/api/capture?access_key=yYEZuW57h6wUhgxSseS3m7Y71SUsnLmx&url=${encodeURIComponent(website.url)}&viewport=1440x900&format=PNG`;
-          setThumbnailUrl(screenshotUrl);
+        // If the URL is a data URL (uploaded image), use it directly
+        if (website.thumbailUrl.startsWith('data:')) {
+          console.log("url of image:",website.thumbailUrl)
+          setThumbnailUrl(website.thumbailUrl);
+        }else{
+          setThumbnailUrl(website.thumbailUrl);
         }
+        // } else {
+        //   // Try to get OpenGraph image
+        //   const response = await fetch(`https://api.opengraph.io/v1/site/${encodeURIComponent(website.url)}?app_id=your-app-id`);
+        //   const data = await response.json();
+          
+        //   if (data?.hybridGraph?.image) {
+        //     setThumbnailUrl(data.hybridGraph.image);
+        //   } else {
+        //     // Fallback to Puppeteer screenshot API
+        //     const screenshotUrl = `http://api.screenshotlayer.com/api/capture?access_key=yYEZuW57h6wUhgxSseS3m7Y71SUsnLmx&url=${encodeURIComponent(website.url)}&viewport=1440x900&format=PNG`;
+        //     setThumbnailUrl(screenshotUrl);
+        //   }
+        // }
       } catch (error) {
         console.log('Error fetching thumbnail:', error);
         // Use a placeholder image
@@ -63,7 +75,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
     };
 
     fetchThumbnail();
-  }, [website.url]);
+  }, [website.thumbailUrl]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -107,7 +119,13 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
   };
 
   const handleEditClick = () => {
-    setIsUrlModalOpen(true);
+    setIsPreviewModalOpen(true);
+  };
+
+  const handleDeleteClick = () => {
+    if (window.confirm(`Are you sure you want to delete "${website.name}"? This action cannot be undone.`)) {
+      onDelete(website);
+    }
   };
 
   if (viewMode === 'list') {
@@ -167,6 +185,11 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
               >
                 <MessageSquare className="h-4 w-4 mr-1" />
                 Comments
+                {website.commentCount && website.commentCount > 0 && (
+                  <span className="ml-1 bg-icici-orange text-white text-xs rounded-full px-2 py-0.5">
+                    {website.commentCount}
+                  </span>
+                )}
               </Button>
               <Button
                 onClick={handleEditClick}
@@ -174,11 +197,18 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
               >
                 EDIT
               </Button>
+              <Button
+                onClick={handleDeleteClick}
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
 
-        <Dialog open={isUrlModalOpen} onOpenChange={setIsUrlModalOpen}>
+        <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
           <DialogContent className="sm:max-w-[800px] max-h-[90vh] bg-white">
             <DialogHeader>
               <DialogTitle className="text-xl font-semibold text-icici-darkGray">
@@ -187,16 +217,30 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
             </DialogHeader>
             <div className="py-4">
               <div className="mb-4">
-                <iframe
-                  src={website.url}
-                  className="w-full h-96 border border-gray-300 rounded"
-                  title={`Preview of ${website.name}`}
-                />
+                {website.url && !website.url.startsWith('data:') ? (
+                  <iframe
+                    src={website.url}
+                    className="w-full h-96 border border-gray-300 rounded"
+                    title={`Preview of ${website.name}`}
+                  />
+                ) : (
+                  <div className="w-full h-96 border border-gray-300 rounded flex items-center justify-center bg-gray-50">
+                    {thumbnailUrl ? (
+                      <img 
+                        src={thumbnailUrl} 
+                        alt={website.name}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    ) : (
+                      <p className="text-gray-500">No preview available</p>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex justify-end gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => setIsUrlModalOpen(false)}
+                  onClick={() => setIsPreviewModalOpen(false)}
                   className="px-6 py-2 border-gray-300 hover:bg-gray-50"
                 >
                   Close
@@ -204,7 +248,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
                 <Button
                   onClick={() => {
                     onEdit(website);
-                    setIsUrlModalOpen(false);
+                    setIsPreviewModalOpen(false);
                   }}
                   className="px-6 py-2 bg-icici-orange hover:bg-icici-red text-white font-semibold"
                 >
@@ -243,6 +287,14 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
               {getStatusLabel(website.status)}
             </Badge>
           </div>
+          <Button
+            onClick={handleDeleteClick}
+            variant="outline"
+            size="sm"
+            className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-800 transition-colors duration-200"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Thumbnail Image with smaller aspect ratio */}
@@ -261,7 +313,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
           )}
         </div>
 
-        <p className="text-sm text-gray-600 mb-3">{website.description}</p>
+        {/* <p className="text-sm text-gray-600 mb-3">{website.description}</p> */}
 
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-400">
@@ -278,9 +330,14 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
             <Button
               onClick={() => onViewComments(website)}
               variant="outline"
-              className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
+              className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md relative"
             >
               <MessageSquare className="h-4 w-4" />
+              {website.commentCount && website.commentCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                  {website.commentCount}
+                </span>
+              )}
             </Button>
             <Button
               onClick={handleEditClick}
@@ -292,7 +349,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
         </div>
       </div>
 
-      <Dialog open={isUrlModalOpen} onOpenChange={setIsUrlModalOpen}>
+      <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-icici-darkGray">
@@ -301,29 +358,52 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
           </DialogHeader>
           <div className="py-4">
             <div className="mb-4">
-              <iframe
-                src={website.url}
-                className="w-full h-96 border border-gray-300 rounded"
-                title={`Preview of ${website.name}`}
-              />
+              {website.url && !website.url.startsWith('data:') ? (
+                <iframe
+                  src={website.url}
+                  className="w-full h-96 border border-gray-300 rounded"
+                  title={`Preview of ${website.name}`}
+                />
+              ) : (
+                <div className="w-full h-96 border border-gray-300 rounded flex items-center justify-center bg-gray-50">
+                  {thumbnailUrl ? (
+                    <img 
+                      src={thumbnailUrl} 
+                      alt={website.name}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <p className="text-gray-500">No preview available</p>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-3">
               <Button
                 variant="outline"
-                onClick={() => setIsUrlModalOpen(false)}
+                onClick={() => setIsPreviewModalOpen(false)}
                 className="px-6 py-2 border-gray-300 hover:bg-gray-50"
               >
                 Close
               </Button>
-              <Button
+              {/* <Button
                 onClick={() => {
                   onEdit(website);
-                  setIsUrlModalOpen(false);
+                  setIsPreviewModalOpen(false);
                 }}
                 className="px-6 py-2 bg-icici-orange hover:bg-icici-red text-white font-semibold"
               >
                 Edit Content
-              </Button>
+              </Button> */}
+<Button
+  onClick={() => {
+    window.open(website.url, '_blank'); // Open the website URL in a new tab
+    setIsPreviewModalOpen(false); // Close the modal if needed
+  }}
+  className="px-6 py-2 bg-icici-orange hover:bg-icici-red text-white font-semibold"
+>
+  Visit Website
+</Button>
             </div>
           </div>
         </DialogContent>

@@ -10,17 +10,21 @@ export const mockWebsites: Website[] = [
     status: 'in-progress',
     lastUpdated: '15/06/2024',
     category: 'Banking',
-    url: 'http://www.udemy.com/'
+    url: 'https://kmsnlp.icicipruamc.com/bro-bot',
+    commentCount: 3,
+    thumbailUrl:'/project/Brobot_Search_Page.jpeg'
   },
   {
     id: '2',
-    name: 'Bluechip Fund Landing Page',
+    name: 'Future You Landing Page',
     description: '',
     content: 'Sophisticated investment platform designed for corporate clients, featuring advanced portfolio management tools, real-time market analytics, risk assessment capabilities, and comprehensive reporting dashboard.',
     status: 'in-progress',
     lastUpdated: '14/06/2024',
     category: 'Investment',
-    url: 'Retirement Plan Landing Page'
+    url: 'https://kmsnlp.icicipruamc.com/future-you-ai',
+    commentCount: 1,
+    thumbailUrl:'/project/future.jpeg'
   },
   {
     id: '3',
@@ -30,6 +34,8 @@ export const mockWebsites: Website[] = [
     status: 'in-progress',
     lastUpdated: '13/06/2024',
     category: 'Mobile',
-    url: 'http://www.icicibank.com/mobile-banking'
+    url: 'http://www.icicibank.com/mobile-banking',
+    commentCount: 0,
+    thumbailUrl:'/project/mobile_banking.jpeg'
   },
 ];

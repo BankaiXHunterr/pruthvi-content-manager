@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Search, Grid3X3, List } from 'lucide-react';
+import { Search, Grid3X3, List, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +18,7 @@ interface FilterBarProps {
   onStatusChange: (value: string) => void;
   viewMode: 'grid' | 'list';
   onViewModeChange: (mode: 'grid' | 'list') => void;
+  onCreateClick: () => void;
 }
 
 const FilterBar: React.FC<FilterBarProps> = ({
@@ -27,6 +28,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
   onStatusChange,
   viewMode,
   onViewModeChange,
+  onCreateClick,
 }) => {
   return (
     <div className="bg-white border-b border-gray-200 px-4 py-4 lg:px-6">
@@ -42,7 +44,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
           />
         </div>
 
-        {/* Filters and View Toggle */}
+        {/* Filters and Actions */}
         <div className="flex items-center gap-3">
           {/* Status Filter */}
           <Select value={statusFilter} onValueChange={onStatusChange}>
@@ -51,11 +53,24 @@ const FilterBar: React.FC<FilterBarProps> = ({
             </SelectTrigger>
             <SelectContent className="bg-white">
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="pending">Pending Update</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="marketing-review">Marketing Review in Progress</SelectItem>
+              <SelectItem value="compliance-review">Compliance Review in Progress</SelectItem>
+              <SelectItem value="ready-to-deploy">Ready to Deploy</SelectItem>
+              <SelectItem value="deployed">Deployed in Production</SelectItem>
+              <SelectItem value="issue">Issue with Comment</SelectItem>
+              <SelectItem value="in-progress">In progress</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Create Button */}
+          <Button
+            onClick={onCreateClick}
+            className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create
+          </Button>
 
           {/* View Mode Toggle */}
           <div className="flex border border-gray-300 rounded-md">
