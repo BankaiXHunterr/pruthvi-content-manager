@@ -10,9 +10,14 @@ export const mockWebsites: Website[] = [
     status: 'in-progress',
     lastUpdated: '15/06/2024',
     category: 'Banking',
+<<<<<<< HEAD
     url: 'https://kmsnlp.icicipruamc.com/bro-bot',
     commentCount: 3,
     thumbailUrl:'/project/Brobot_Search_Page.jpeg'
+=======
+    url: 'http://www.udemy.com/',
+    commentCount: 3
+>>>>>>> 25d4dc7a0b223ccbe196e22d70c3bcb4e12b8151
   },
   {
     id: '2',
@@ -22,9 +27,14 @@ export const mockWebsites: Website[] = [
     status: 'in-progress',
     lastUpdated: '14/06/2024',
     category: 'Investment',
+<<<<<<< HEAD
     url: 'https://kmsnlp.icicipruamc.com/future-you-ai',
     commentCount: 1,
     thumbailUrl:'/project/future.jpeg'
+=======
+    url: 'Retirement Plan Landing Page',
+    commentCount: 1
+>>>>>>> 25d4dc7a0b223ccbe196e22d70c3bcb4e12b8151
   },
   {
     id: '3',
@@ -35,7 +45,11 @@ export const mockWebsites: Website[] = [
     lastUpdated: '13/06/2024',
     category: 'Mobile',
     url: 'http://www.icicibank.com/mobile-banking',
+<<<<<<< HEAD
     commentCount: 0,
     thumbailUrl:'/project/mobile_banking.jpeg'
+=======
+    commentCount: 0
+>>>>>>> 25d4dc7a0b223ccbe196e22d70c3bcb4e12b8151
   },
 ];
