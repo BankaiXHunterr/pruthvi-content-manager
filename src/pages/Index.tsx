@@ -10,6 +10,9 @@ import Toast from '../components/Toast';
 import LoadingCard from '../components/LoadingCard';
 import { mockWebsites } from '../data/mockData';
 import { StorageUtils } from '../utils/storage';
+import { useAuth } from '../contexts/AuthContext';
+import { ROLE_PERMISSIONS } from '../types/auth';
+import { WebsiteStatus } from '../types/auth';
 
 const Index = () => {
   const [websites, setWebsites] = useState<Website[]>([]);
@@ -31,17 +34,17 @@ const Index = () => {
     isVisible: false
   });
 
+  const { user } = useAuth();
+
   // Load websites from localStorage on component mount
   useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => {
       const savedWebsites = StorageUtils.loadWebsites();
       if (savedWebsites.length > 0) {
-        // Update comment counts for existing websites
         const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(savedWebsites);
         setWebsites(websitesWithComments);
       } else {
-        // First time loading, use mock data
         const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(mockWebsites);
         setWebsites(websitesWithComments);
         StorageUtils.saveWebsites(websitesWithComments);
@@ -83,39 +86,93 @@ const Index = () => {
   };
 
   const handleDelete = (website: Website) => {
+    if (!user) return;
+    
+    const permissions = ROLE_PERMISSIONS[user.role];
+    if (!permissions.canDelete || website.status !== 'draft') {
+      showToast('You can only delete draft websites', 'error');
+      return;
+    }
+
     setWebsites(prev => prev.filter(w => w.id !== website.id));
     showToast(`Project "${website.name}" deleted successfully`, 'success');
   };
 
+  const handleApprove = (website: Website) => {
+    if (!user) return;
+    
+    const permissions = ROLE_PERMISSIONS[user.role];
+    if (!permissions.canApprove) {
+      showToast('You do not have permission to approve websites', 'error');
+      return;
+    }
+
+    setWebsites(prev => 
+      prev.map(w => 
+        w.id === website.id 
+          ? { ...w, status: 'compliance-approved' as WebsiteStatus, lastUpdated: new Date().toLocaleDateString('en-GB') }
+          : w
+      )
+    );
+
+    showToast(`Project "${website.name}" approved successfully`, 'success');
+  };
+
   const handleDownload = (website: Website) => {
-    // Simulate downloading a zip file of the website's codebase
-    const fileName = `${website.name.toLowerCase().replace(/\s+/g, '-')}-codebase.zip`;
+    if (!user) return;
     
-    // Create a blob with some sample content (in a real app, this would be the actual zip file)
-    const content = `# ${website.name} Codebase\n\nThis would contain the deployed codebase for ${website.name}.\n\nProject Details:\n- Status: ${website.status}\n- Category: ${website.category}\n- Last Updated: ${website.lastUpdated}\n\nDescription: ${website.description}`;
+    const permissions = ROLE_PERMISSIONS[user.role];
+    if (!permissions.canDownload) {
+      showToast('You do not have permission to download', 'error');
+      return;
+    }
+
+    if (website.status !== 'compliance-approved') {
+      showToast('Only compliance-approved websites can be downloaded', 'error');
+      return;
+    }
+
+    // Create ZIP package
+    const zipBlob = StorageUtils.createZipPackage(website);
+    const fileName = `${website.name.toLowerCase().replace(/\s+/g, '-')}-approved-package.json`;
     
-    const blob = new Blob([content], { type: 'application/zip' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create a temporary link and trigger download
+    const url = URL.createObjectURL(zipBlob);
     const link = document.createElement('a');
     link.href = url;
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    // Clean up the URL object
     URL.revokeObjectURL(url);
     
-    showToast(`Downloaded codebase for ${website.name}`, 'success');
+    showToast(`Downloaded compliance package for ${website.name}`, 'success');
   };
 
   const handleSave = (website: Website, newContent: string) => {
+    if (!user) return;
+
+    const permissions = ROLE_PERMISSIONS[user.role];
+    if (!permissions.canEdit) {
+      showToast('You do not have permission to edit', 'error');
+      return;
+    }
+
+    let newStatus: WebsiteStatus = website.status;
+    
+    // Auto-update status based on role
+    if (user.role === 'marketing-reviewer' && website.status === 'draft') {
+      newStatus = 'marketing-review-completed';
+    }
+
     setWebsites(prev => 
       prev.map(w => 
         w.id === website.id 
-          ? { ...w, content: newContent, lastUpdated: new Date().toLocaleDateString('en-GB') }
+          ? { 
+              ...w, 
+              content: newContent, 
+              status: newStatus,
+              lastUpdated: new Date().toLocaleDateString('en-GB') 
+            }
           : w
       )
     );
@@ -124,9 +181,18 @@ const Index = () => {
   };
 
   const handleCreateProject = (newWebsite: Omit<Website, 'id'>) => {
+    if (!user) return;
+    
+    const permissions = ROLE_PERMISSIONS[user.role];
+    if (!permissions.canCreate) {
+      showToast('You do not have permission to create projects', 'error');
+      return;
+    }
+
     const website: Website = {
       ...newWebsite,
       id: Date.now().toString(),
+      status: 'draft',
       commentCount: 0
     };
     
@@ -146,13 +212,15 @@ const Index = () => {
     setToast(prev => ({ ...prev, isVisible: false }));
   };
 
-  // Update comment counts when comments modal closes
   const handleCommentsModalClose = () => {
     setIsCommentsModalOpen(false);
-    // Update comment counts for all websites
     const updatedWebsites = StorageUtils.updateWebsiteCommentCounts(websites);
     setWebsites(updatedWebsites);
   };
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -221,6 +289,7 @@ const Index = () => {
                 onViewComments={handleViewComments}
                 onDownload={handleDownload}
                 onDelete={handleDelete}
+                onApprove={handleApprove}
                 viewMode={viewMode}
               />
             ))}

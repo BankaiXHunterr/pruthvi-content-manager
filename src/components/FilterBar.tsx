@@ -10,6 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useAuth } from '../contexts/AuthContext';
+import { ROLE_PERMISSIONS, STATUS_LABELS } from '../types/auth';
+import { WebsiteStatus } from '../types/auth';
 
 interface FilterBarProps {
   searchTerm: string;
@@ -30,6 +33,12 @@ const FilterBar: React.FC<FilterBarProps> = ({
   onViewModeChange,
   onCreateClick,
 }) => {
+  const { user } = useAuth();
+
+  if (!user) return null;
+
+  const permissions = ROLE_PERMISSIONS[user.role];
+
   return (
     <div className="bg-white border-b border-gray-200 px-4 py-4 lg:px-6">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -48,29 +57,27 @@ const FilterBar: React.FC<FilterBarProps> = ({
         <div className="flex items-center gap-3">
           {/* Status Filter */}
           <Select value={statusFilter} onValueChange={onStatusChange}>
-            <SelectTrigger className="w-32 border-gray-300">
+            <SelectTrigger className="w-48 border-gray-300">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent className="bg-white">
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="marketing-review">Marketing Review in Progress</SelectItem>
-              <SelectItem value="compliance-review">Compliance Review in Progress</SelectItem>
-              <SelectItem value="ready-to-deploy">Ready to Deploy</SelectItem>
-              <SelectItem value="deployed">Deployed in Production</SelectItem>
-              <SelectItem value="issue">Issue with Comment</SelectItem>
-              <SelectItem value="in-progress">In progress</SelectItem>
+              <SelectItem value="draft">{STATUS_LABELS.draft}</SelectItem>
+              <SelectItem value="marketing-review-completed">{STATUS_LABELS['marketing-review-completed']}</SelectItem>
+              <SelectItem value="compliance-approved">{STATUS_LABELS['compliance-approved']}</SelectItem>
             </SelectContent>
           </Select>
 
-          {/* Create Button */}
-          <Button
-            onClick={onCreateClick}
-            className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create
-          </Button>
+          {/* Create Button - Only visible for Marketing Creator */}
+          {permissions.canCreate && (
+            <Button
+              onClick={onCreateClick}
+              className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create
+            </Button>
+          )}
 
           {/* View Mode Toggle */}
           <div className="flex border border-gray-300 rounded-md">

@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { InfoIcon, MessageSquare, Download, Edit, Trash2 } from 'lucide-react';
+import { InfoIcon, MessageSquare, Download, Edit, Trash2, CheckCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -9,13 +10,16 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { WebsiteStatus } from '../types/auth';
+import { useAuth } from '../contexts/AuthContext';
+import { ROLE_PERMISSIONS, STATUS_LABELS } from '../types/auth';
 
 export interface Website {
   id: string;
   name: string;
   description: string;
   content: string;
-  status: 'draft' | 'marketing-review' | 'compliance-review' | 'ready-to-deploy' | 'deployed' | 'issue' | 'in-progress';
+  status: WebsiteStatus;
   lastUpdated: string;
   category: string;
   url?: string;
@@ -29,13 +33,23 @@ interface WebsiteCardProps {
   onViewComments: (website: Website) => void;
   onDownload: (website: Website) => void;
   onDelete: (website: Website) => void;
+  onApprove: (website: Website) => void;
   viewMode: 'grid' | 'list';
 }
 
-const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewComments, onDownload, onDelete, viewMode }) => {
+const WebsiteCard: React.FC<WebsiteCardProps> = ({ 
+  website, 
+  onEdit, 
+  onViewComments, 
+  onDownload, 
+  onDelete, 
+  onApprove,
+  viewMode 
+}) => {
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [thumbnailLoading, setThumbnailLoading] = useState(true);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchThumbnail = async () => {
@@ -45,29 +59,13 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
       }
 
       try {
-        // If the URL is a data URL (uploaded image), use it directly
         if (website.thumbailUrl.startsWith('data:')) {
-          console.log("url of image:",website.thumbailUrl)
           setThumbnailUrl(website.thumbailUrl);
-        }else{
+        } else {
           setThumbnailUrl(website.thumbailUrl);
         }
-        // } else {
-        //   // Try to get OpenGraph image
-        //   const response = await fetch(`https://api.opengraph.io/v1/site/${encodeURIComponent(website.url)}?app_id=your-app-id`);
-        //   const data = await response.json();
-          
-        //   if (data?.hybridGraph?.image) {
-        //     setThumbnailUrl(data.hybridGraph.image);
-        //   } else {
-        //     // Fallback to Puppeteer screenshot API
-        //     const screenshotUrl = `http://api.screenshotlayer.com/api/capture?access_key=yYEZuW57h6wUhgxSseS3m7Y71SUsnLmx&url=${encodeURIComponent(website.url)}&viewport=1440x900&format=PNG`;
-        //     setThumbnailUrl(screenshotUrl);
-        //   }
-        // }
       } catch (error) {
         console.log('Error fetching thumbnail:', error);
-        // Use a placeholder image
         setThumbnailUrl('/placeholder.svg');
       } finally {
         setThumbnailLoading(false);
@@ -77,44 +75,16 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
     fetchThumbnail();
   }, [website.thumbailUrl]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: WebsiteStatus) => {
     switch (status) {
-      case 'deployed':
+      case 'compliance-approved':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'ready-to-deploy':
+      case 'marketing-review-completed':
         return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'marketing-review':
-      case 'compliance-review':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'in-progress':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'draft':
         return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'issue':
-        return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'deployed':
-        return 'Deployed in Production';
-      case 'ready-to-deploy':
-        return 'Ready to Deploy';
-      case 'marketing-review':
-        return 'Marketing Review in Progress';
-      case 'compliance-review':
-        return 'Compliance Review in Progress';
-      case 'draft':
-        return 'Draft';
-      case 'issue':
-        return 'Issue with Comment';
-      case "in-progress":
-        return 'In progress'
-      default:
-        return 'Unknown';
     }
   };
 
@@ -127,6 +97,20 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
       onDelete(website);
     }
   };
+
+  const handleApproveClick = () => {
+    if (window.confirm(`Are you sure you want to approve "${website.name}" for compliance?`)) {
+      onApprove(website);
+    }
+  };
+
+  if (!user) return null;
+
+  const permissions = ROLE_PERMISSIONS[user.role];
+  const canDelete = permissions.canDelete && website.status === 'draft';
+  const canEdit = permissions.canEdit;
+  const canApprove = permissions.canApprove && website.status === 'marketing-review-completed';
+  const canDownload = permissions.canDownload && website.status === 'compliance-approved';
 
   if (viewMode === 'list') {
     return (
@@ -152,7 +136,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
                 <div className="flex items-center gap-3 mb-2">
                   <h3 className="text-lg font-semibold text-icici-darkGray">{website.name}</h3>
                   <Badge className={`text-xs ${getStatusColor(website.status)}`}>
-                    {getStatusLabel(website.status)}
+                    {STATUS_LABELS[website.status]}
                   </Badge>
                   <TooltipProvider>
                     <Tooltip>
@@ -170,14 +154,16 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
               </div>
             </div>
             <div className="ml-4 flex gap-2">
-              <Button
-                onClick={() => onDownload(website)}
-                variant="outline"
-                className="border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"
-              >
-                <Download className="h-4 w-4 mr-1" />
-                Download
-              </Button>
+              {canDownload && (
+                <Button
+                  onClick={() => onDownload(website)}
+                  variant="outline"
+                  className="border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Download
+                </Button>
+              )}
               <Button
                 onClick={() => onViewComments(website)}
                 variant="outline"
@@ -191,19 +177,32 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
                   </span>
                 )}
               </Button>
-              <Button
-                onClick={handleEditClick}
-                className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-6 py-2 rounded-md transition-colors duration-200"
-              >
-                EDIT
-              </Button>
-              <Button
-                onClick={handleDeleteClick}
-                variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {canApprove && (
+                <Button
+                  onClick={handleApproveClick}
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Approve
+                </Button>
+              )}
+              {canEdit && (
+                <Button
+                  onClick={handleEditClick}
+                  className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-6 py-2 rounded-md transition-colors duration-200"
+                >
+                  EDIT
+                </Button>
+              )}
+              {canDelete && (
+                <Button
+                  onClick={handleDeleteClick}
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -284,20 +283,21 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
               </TooltipProvider>
             </div>
             <Badge className={`text-xs mb-3 ${getStatusColor(website.status)}`}>
-              {getStatusLabel(website.status)}
+              {STATUS_LABELS[website.status]}
             </Badge>
           </div>
-          <Button
-            onClick={handleDeleteClick}
-            variant="outline"
-            size="sm"
-            className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-800 transition-colors duration-200"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {canDelete && (
+            <Button
+              onClick={handleDeleteClick}
+              variant="outline"
+              size="sm"
+              className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-800 transition-colors duration-200"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
-        {/* Thumbnail Image with smaller aspect ratio */}
         <div className="mb-4 aspect-[4/3] w-full">
           {thumbnailLoading ? (
             <div className="w-full h-full bg-gray-200 rounded animate-pulse"></div>
@@ -313,20 +313,20 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
           )}
         </div>
 
-        {/* <p className="text-sm text-gray-600 mb-3">{website.description}</p> */}
-
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-400">
             Updated: {website.lastUpdated}
           </span>
           <div className="flex gap-2">
-            <Button
-              onClick={() => onDownload(website)}
-              variant="outline"
-              className="border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
+            {canDownload && (
+              <Button
+                onClick={() => onDownload(website)}
+                variant="outline"
+                className="border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-800 font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               onClick={() => onViewComments(website)}
               variant="outline"
@@ -339,12 +339,22 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
                 </span>
               )}
             </Button>
-            <Button
-              onClick={handleEditClick}
-              className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-4 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
-            >
-              EDIT
-            </Button>
+            {canApprove && (
+              <Button
+                onClick={handleApproveClick}
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
+              >
+                <CheckCircle className="h-4 w-4" />
+              </Button>
+            )}
+            {canEdit && (
+              <Button
+                onClick={handleEditClick}
+                className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-4 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
+              >
+                EDIT
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -386,24 +396,15 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({ website, onEdit, onViewCommen
               >
                 Close
               </Button>
-              {/* <Button
+              <Button
                 onClick={() => {
-                  onEdit(website);
+                  window.open(website.url, '_blank');
                   setIsPreviewModalOpen(false);
                 }}
                 className="px-6 py-2 bg-icici-orange hover:bg-icici-red text-white font-semibold"
               >
-                Edit Content
-              </Button> */}
-<Button
-  onClick={() => {
-    window.open(website.url, '_blank'); // Open the website URL in a new tab
-    setIsPreviewModalOpen(false); // Close the modal if needed
-  }}
-  className="px-6 py-2 bg-icici-orange hover:bg-icici-red text-white font-semibold"
->
-  Visit Website
-</Button>
+                Visit Website
+              </Button>
             </div>
           </div>
         </DialogContent>

@@ -3,7 +3,8 @@ import { Website } from '../components/WebsiteCard';
 
 const STORAGE_KEYS = {
   WEBSITES: 'lovable_websites',
-  COMMENTS: 'projectComments'
+  COMMENTS: 'projectComments',
+  CURRENT_USER: 'currentUser'
 };
 
 export const StorageUtils = {
@@ -46,5 +47,39 @@ export const StorageUtils = {
       ...website,
       commentCount: StorageUtils.getCommentCount(website.id)
     }));
+  },
+
+  // Export data for compliance
+  exportData: (): string => {
+    try {
+      const websites = StorageUtils.loadWebsites();
+      const comments = localStorage.getItem(STORAGE_KEYS.COMMENTS);
+      
+      const exportData = {
+        websites,
+        comments: comments ? JSON.parse(comments) : [],
+        exportDate: new Date().toISOString(),
+        exportVersion: '1.0'
+      };
+      
+      return JSON.stringify(exportData, null, 2);
+    } catch (error) {
+      console.error('Failed to export data:', error);
+      return '{}';
+    }
+  },
+
+  // Create ZIP package for compliance-approved websites
+  createZipPackage: (website: Website): Blob => {
+    const packageData = {
+      website,
+      comments: JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMENTS) || '[]')
+        .filter((comment: any) => comment.projectId === website.id),
+      packageDate: new Date().toISOString(),
+      approvalStatus: 'compliance-approved'
+    };
+    
+    const content = JSON.stringify(packageData, null, 2);
+    return new Blob([content], { type: 'application/json' });
   }
 };
