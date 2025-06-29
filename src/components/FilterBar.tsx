@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Search, Grid3X3, List, Plus } from 'lucide-react';
+import { Search, Grid3X3, List, Plus, Rocket } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '../contexts/AuthContext';
 import { ROLE_PERMISSIONS, STATUS_LABELS } from '../types/auth';
-import { WebsiteStatus } from '../types/auth';
 
 interface FilterBarProps {
   searchTerm: string;
@@ -65,10 +64,11 @@ const FilterBar: React.FC<FilterBarProps> = ({
               <SelectItem value="draft">{STATUS_LABELS.draft}</SelectItem>
               <SelectItem value="marketing-review-completed">{STATUS_LABELS['marketing-review-completed']}</SelectItem>
               <SelectItem value="compliance-approved">{STATUS_LABELS['compliance-approved']}</SelectItem>
+              <SelectItem value="deployed">{STATUS_LABELS.deployed}</SelectItem>
             </SelectContent>
           </Select>
 
-          {/* Create Button - Only visible for Marketing Creator */}
+          {/* Create Button */}
           {permissions.canCreate && (
             <Button
               onClick={onCreateClick}
@@ -76,6 +76,17 @@ const FilterBar: React.FC<FilterBarProps> = ({
             >
               <Plus className="h-4 w-4 mr-2" />
               Create
+            </Button>
+          )}
+
+          {/* Developer-specific deployment button placeholder */}
+          {user.role === 'developer' && (
+            <Button
+              variant="outline"
+              className="border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+            >
+              <Rocket className="h-4 w-4 mr-2" />
+              Deploy
             </Button>
           )}
 

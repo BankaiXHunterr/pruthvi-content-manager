@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { InfoIcon, MessageSquare, Download, Edit, Trash2, CheckCircle } from 'lucide-react';
+import { InfoIcon, MessageSquare, Download, Edit, Trash2, CheckCircle, Rocket } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -34,6 +34,7 @@ interface WebsiteCardProps {
   onDownload: (website: Website) => void;
   onDelete: (website: Website) => void;
   onApprove: (website: Website) => void;
+  onDeploy?: (website: Website) => void;
   viewMode: 'grid' | 'list';
 }
 
@@ -44,6 +45,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   onDownload, 
   onDelete, 
   onApprove,
+  onDeploy,
   viewMode 
 }) => {
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
@@ -77,6 +79,8 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
 
   const getStatusColor = (status: WebsiteStatus) => {
     switch (status) {
+      case 'deployed':
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       case 'compliance-approved':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'marketing-review-completed':
@@ -104,13 +108,22 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
     }
   };
 
+  const handleDeployClick = () => {
+    if (window.confirm(`Are you sure you want to deploy "${website.name}" to production?`)) {
+      if (onDeploy) {
+        onDeploy(website);
+      }
+    }
+  };
+
   if (!user) return null;
 
   const permissions = ROLE_PERMISSIONS[user.role];
   const canDelete = permissions.canDelete && website.status === 'draft';
   const canEdit = permissions.canEdit;
   const canApprove = permissions.canApprove && website.status === 'marketing-review-completed';
-  const canDownload = permissions.canDownload && website.status === 'compliance-approved';
+  const canDownload = permissions.canDownload && (website.status === 'compliance-approved' || website.status === 'deployed');
+  const canDeploy = permissions.canDeploy && website.status === 'compliance-approved';
 
   if (viewMode === 'list') {
     return (
@@ -154,6 +167,15 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
               </div>
             </div>
             <div className="ml-4 flex gap-2">
+              {canDeploy && (
+                <Button
+                  onClick={handleDeployClick}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+                >
+                  <Rocket className="h-4 w-4 mr-1" />
+                  Deploy
+                </Button>
+              )}
               {canDownload && (
                 <Button
                   onClick={() => onDownload(website)}
@@ -318,6 +340,14 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
             Updated: {website.lastUpdated}
           </span>
           <div className="flex gap-2">
+            {canDeploy && (
+              <Button
+                onClick={handleDeployClick}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
+              >
+                <Rocket className="h-4 w-4" />
+              </Button>
+            )}
             {canDownload && (
               <Button
                 onClick={() => onDownload(website)}

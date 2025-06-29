@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import Header from '../components/Header';
 import FilterBar from '../components/FilterBar';
@@ -204,6 +203,31 @@ const Index = () => {
     showToast('Logged out successfully', 'success');
   };
 
+  const handleDeploy = (website: Website) => {
+    if (!user) return;
+    
+    const permissions = ROLE_PERMISSIONS[user.role];
+    if (!permissions.canDeploy) {
+      showToast('You do not have permission to deploy websites', 'error');
+      return;
+    }
+
+    if (website.status !== 'compliance-approved') {
+      showToast('Only compliance-approved websites can be deployed', 'error');
+      return;
+    }
+
+    setWebsites(prev => 
+      prev.map(w => 
+        w.id === website.id 
+          ? { ...w, status: 'deployed' as WebsiteStatus, lastUpdated: new Date().toLocaleDateString('en-GB') }
+          : w
+      )
+    );
+
+    showToast(`Project "${website.name}" deployed successfully`, 'success');
+  };
+
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type, isVisible: true });
   };
@@ -290,6 +314,7 @@ const Index = () => {
                 onDownload={handleDownload}
                 onDelete={handleDelete}
                 onApprove={handleApprove}
+                onDeploy={handleDeploy}
                 viewMode={viewMode}
               />
             ))}

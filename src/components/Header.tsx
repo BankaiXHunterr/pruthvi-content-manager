@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { Search, User, LogOut, Settings, UserCog } from 'lucide-react';
+import { Search, User, LogOut, Settings, UserCog, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types/auth';
+import { ROLE_LABELS } from '../types/auth';
 
 interface HeaderProps {
   onLogout?: () => void;
@@ -33,16 +35,18 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
     onLogout?.();
   };
 
-  const getRoleLabel = (role: UserRole) => {
+  const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case 'marketing-creator':
-        return 'Marketing Creator';
+        return 'bg-blue-100 text-blue-800';
       case 'marketing-reviewer':
-        return 'Marketing Reviewer';
+        return 'bg-purple-100 text-purple-800';
       case 'compliance-reviewer':
-        return 'Compliance Reviewer';
+        return 'bg-green-100 text-green-800';
+      case 'developer':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       default:
-        return 'Unknown Role';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -71,20 +75,28 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
 
         {/* Right - Role Selector & User Menu */}
         <div className="flex items-center space-x-4">
-          {/* Role Selector */}
-          <div className="flex items-center gap-2">
-            <UserCog className="h-4 w-4 text-gray-600" />
-            <Select value={user.role} onValueChange={(value: UserRole) => switchRole(value)}>
-              <SelectTrigger className="w-48 border-gray-300">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="marketing-creator">Marketing Creator</SelectItem>
-                <SelectItem value="marketing-reviewer">Marketing Reviewer</SelectItem>
-                <SelectItem value="compliance-reviewer">Compliance Reviewer</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Role Selector - Only show for developer role */}
+          {user.role === 'developer' && (
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-orange-600" />
+              <Select value={user.role} onValueChange={(value: UserRole) => switchRole(value)}>
+                <SelectTrigger className="w-48 border-gray-300">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="marketing-creator">Marketing Creator</SelectItem>
+                  <SelectItem value="marketing-reviewer">Marketing Reviewer</SelectItem>
+                  <SelectItem value="compliance-reviewer">Compliance Reviewer</SelectItem>
+                  <SelectItem value="developer">Developer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Current Role Badge */}
+          <Badge className={`${getRoleBadgeColor(user.role)} font-medium`}>
+            {ROLE_LABELS[user.role]}
+          </Badge>
 
           {/* Mobile Search Toggle */}
           <Button
@@ -110,9 +122,9 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
                 <div className="flex flex-col space-y-1 text-left">
                   <p className="font-medium">{user.name}</p>
                   <p className="text-sm text-gray-500">{user.email}</p>
-                  <p className="text-xs text-icici-orange font-medium">
-                    {getRoleLabel(user.role)}
-                  </p>
+                  <Badge className={`${getRoleBadgeColor(user.role)} text-xs w-fit`}>
+                    {ROLE_LABELS[user.role]}
+                  </Badge>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

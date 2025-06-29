@@ -8,11 +8,12 @@ interface AuthContextType {
   logout: () => void;
   switchRole: (role: UserRole) => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demonstration
+// Mock users for demonstration - in real app, roles would be determined by backend
 const MOCK_USERS: User[] = [
   {
     id: '1',
@@ -31,11 +32,18 @@ const MOCK_USERS: User[] = [
     name: 'Lisa Compliance',
     email: 'lisa@company.com',
     role: 'compliance-reviewer'
+  },
+  {
+    id: '4',
+    name: 'Alex Developer',
+    email: 'alex@company.com',
+    role: 'developer'
   }
 ];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check for saved user session
@@ -43,16 +51,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
+    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Mock authentication - in real app, this would call an API
-    const foundUser = MOCK_USERS.find(u => u.email === email);
+    setIsLoading(true);
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Mock authentication - in real app, this would call backend API
+    // Backend would return user role based on email
+    const foundUser = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
+    
     if (foundUser) {
       setUser(foundUser);
       localStorage.setItem('currentUser', JSON.stringify(foundUser));
+      setIsLoading(false);
       return true;
     }
+    
+    setIsLoading(false);
     return false;
   };
 
@@ -75,7 +94,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       logout,
       switchRole,
-      isAuthenticated: !!user
+      isAuthenticated: !!user,
+      isLoading
     }}>
       {children}
     </AuthContext.Provider>
