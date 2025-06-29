@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { InfoIcon, MessageSquare, Download, Edit, Trash2, CheckCircle, Rocket } from 'lucide-react';
+import { InfoIcon, MessageSquare, Download, Edit, Trash2, CheckCircle, Rocket, Settings } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -10,9 +9,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { WebsiteStatus } from '../types/auth';
+import { WebsiteStatus, CommentThread } from '../types/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { ROLE_PERMISSIONS, STATUS_LABELS } from '../types/auth';
+import StatusUpdateModal from './StatusUpdateModal';
+import ThreadedCommentModal from './ThreadedCommentModal';
+import { StorageUtils } from '../utils/storage';
 
 export interface Website {
   id: string;
@@ -35,6 +37,7 @@ interface WebsiteCardProps {
   onDelete: (website: Website) => void;
   onApprove: (website: Website) => void;
   onDeploy?: (website: Website) => void;
+  onStatusUpdate?: (website: Website, newStatus: WebsiteStatus, thread?: CommentThread) => void;
   viewMode: 'grid' | 'list';
 }
 
@@ -46,11 +49,16 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   onDelete, 
   onApprove,
   onDeploy,
+  onStatusUpdate,
   viewMode 
 }) => {
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [thumbnailLoading, setThumbnailLoading] = useState(true);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isStatusUpdateModalOpen, setIsStatusUpdateModalOpen] = useState(false);
+  const [isThreadModalOpen, setIsThreadModalOpen] = useState(false);
+  const [selectedThread, setSelectedThread] = useState<CommentThread | null>(null);
+  const [projectThreads, setProjectThreads] = useState<CommentThread[]>([]);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -77,14 +85,24 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
     fetchThumbnail();
   }, [website.thumbailUrl]);
 
+  useEffect(() => {
+    // Load project threads
+    const threads = StorageUtils.getProjectThreads(website.id);
+    setProjectThreads(threads);
+  }, [website.id]);
+
   const getStatusColor = (status: WebsiteStatus) => {
     switch (status) {
       case 'deployed':
         return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       case 'compliance-approved':
+      case 'ready-for-deployment':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'marketing-review-completed':
+      case 'ready-for-compliance-review':
         return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'marketing-review-in-progress':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'draft':
         return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
@@ -116,6 +134,31 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
     }
   };
 
+  const handleStatusUpdate = (website: Website, newStatus: WebsiteStatus, thread?: CommentThread) => {
+    if (thread) {
+      const allThreads = StorageUtils.loadThreads();
+      const updatedThreads = [...allThreads, thread];
+      StorageUtils.saveThreads(updatedThreads);
+      setProjectThreads(StorageUtils.getProjectThreads(website.id));
+    }
+    
+    if (onStatusUpdate) {
+      onStatusUpdate(website, newStatus, thread);
+    }
+  };
+
+  const handleThreadUpdate = (updatedThread: CommentThread) => {
+    const allThreads = StorageUtils.loadThreads();
+    const updatedThreads = allThreads.map(t => t.id === updatedThread.id ? updatedThread : t);
+    StorageUtils.saveThreads(updatedThreads);
+    setProjectThreads(StorageUtils.getProjectThreads(website.id));
+  };
+
+  const handleViewThread = (thread: CommentThread) => {
+    setSelectedThread(thread);
+    setIsThreadModalOpen(true);
+  };
+
   if (!user) return null;
 
   const permissions = ROLE_PERMISSIONS[user.role];
@@ -123,7 +166,8 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   const canEdit = permissions.canEdit;
   const canApprove = permissions.canApprove && website.status === 'marketing-review-completed';
   const canDownload = permissions.canDownload && (website.status === 'compliance-approved' || website.status === 'deployed');
-  const canDeploy = permissions.canDeploy && website.status === 'compliance-approved';
+  const canDeploy = permissions.canDeploy && (website.status === 'compliance-approved' || website.status === 'ready-for-deployment');
+  const canUpdateStatus = permissions.canUpdateStatus;
 
   if (viewMode === 'list') {
     return (
@@ -164,9 +208,36 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
                   </TooltipProvider>
                 </div>
                 <p className="text-sm text-gray-600 mb-2">{website.description}</p>
+                
+                {/* Thread indicators */}
+                {projectThreads.length > 0 && (
+                  <div className="flex gap-2 mt-2">
+                    {projectThreads.map((thread) => (
+                      <Button
+                        key={thread.id}
+                        onClick={() => handleViewThread(thread)}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-orange-300 text-orange-600 hover:bg-orange-50"
+                      >
+                        {thread.title} ({thread.comments.length})
+                      </Button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             <div className="ml-4 flex gap-2">
+              {canUpdateStatus && (
+                <Button
+                  onClick={() => setIsStatusUpdateModalOpen(true)}
+                  variant="outline"
+                  className="border-purple-300 text-purple-600 hover:bg-purple-50 hover:text-purple-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+                >
+                  <Settings className="h-4 w-4 mr-1" />
+                  Update Status
+                </Button>
+              )}
               {canDeploy && (
                 <Button
                   onClick={handleDeployClick}
@@ -279,6 +350,20 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
             </div>
           </DialogContent>
         </Dialog>
+
+        <StatusUpdateModal
+          website={website}
+          isOpen={isStatusUpdateModalOpen}
+          onClose={() => setIsStatusUpdateModalOpen(false)}
+          onStatusUpdate={handleStatusUpdate}
+        />
+
+        <ThreadedCommentModal
+          thread={selectedThread}
+          isOpen={isThreadModalOpen}
+          onClose={() => setIsThreadModalOpen(false)}
+          onUpdateThread={handleThreadUpdate}
+        />
       </>
     );
   }
@@ -335,11 +420,39 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
           )}
         </div>
 
+        {/* Thread indicators for grid view */}
+        {projectThreads.length > 0 && (
+          <div className="mb-4">
+            <div className="flex flex-wrap gap-1">
+              {projectThreads.map((thread) => (
+                <Button
+                  key={thread.id}
+                  onClick={() => handleViewThread(thread)}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs border-orange-300 text-orange-600 hover:bg-orange-50"
+                >
+                  Thread ({thread.comments.length})
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-400">
             Updated: {website.lastUpdated}
           </span>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {canUpdateStatus && (
+              <Button
+                onClick={() => setIsStatusUpdateModalOpen(true)}
+                variant="outline"
+                className="border-purple-300 text-purple-600 hover:bg-purple-50 hover:text-purple-800 font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            )}
             {canDeploy && (
               <Button
                 onClick={handleDeployClick}
@@ -439,6 +552,20 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      <StatusUpdateModal
+        website={website}
+        isOpen={isStatusUpdateModalOpen}
+        onClose={() => setIsStatusUpdateModalOpen(false)}
+        onStatusUpdate={handleStatusUpdate}
+      />
+
+      <ThreadedCommentModal
+        thread={selectedThread}
+        isOpen={isThreadModalOpen}
+        onClose={() => setIsThreadModalOpen(false)}
+        onUpdateThread={handleThreadUpdate}
+      />
     </>
   );
 };

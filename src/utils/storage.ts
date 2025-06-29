@@ -1,9 +1,11 @@
 
 import { Website } from '../components/WebsiteCard';
+import { CommentThread } from '../types/auth';
 
 const STORAGE_KEYS = {
   WEBSITES: 'lovable_websites',
   COMMENTS: 'projectComments',
+  THREADS: 'commentThreads',
   CURRENT_USER: 'currentUser'
 };
 
@@ -27,14 +29,35 @@ export const StorageUtils = {
     }
   },
 
+  // Thread storage
+  saveThreads: (threads: CommentThread[]): void => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.THREADS, JSON.stringify(threads));
+    } catch (error) {
+      console.error('Failed to save threads to localStorage:', error);
+    }
+  },
+
+  loadThreads: (): CommentThread[] => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.THREADS);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error('Failed to load threads from localStorage:', error);
+      return [];
+    }
+  },
+
+  getProjectThreads: (projectId: string): CommentThread[] => {
+    const allThreads = StorageUtils.loadThreads();
+    return allThreads.filter(thread => thread.projectId === projectId);
+  },
+
   // Comment count helpers
   getCommentCount: (projectId: string): number => {
     try {
-      const comments = localStorage.getItem(STORAGE_KEYS.COMMENTS);
-      if (!comments) return 0;
-      
-      const allComments = JSON.parse(comments);
-      return allComments.filter((comment: any) => comment.projectId === projectId).length;
+      const threads = StorageUtils.getProjectThreads(projectId);
+      return threads.reduce((total, thread) => total + thread.comments.length, 0);
     } catch (error) {
       console.error('Failed to get comment count:', error);
       return 0;
@@ -53,10 +76,12 @@ export const StorageUtils = {
   exportData: (): string => {
     try {
       const websites = StorageUtils.loadWebsites();
+      const threads = StorageUtils.loadThreads();
       const comments = localStorage.getItem(STORAGE_KEYS.COMMENTS);
       
       const exportData = {
         websites,
+        threads,
         comments: comments ? JSON.parse(comments) : [],
         exportDate: new Date().toISOString(),
         exportVersion: '1.0'
@@ -71,8 +96,10 @@ export const StorageUtils = {
 
   // Create ZIP package for compliance-approved websites
   createZipPackage: (website: Website): Blob => {
+    const threads = StorageUtils.getProjectThreads(website.id);
     const packageData = {
       website,
+      threads,
       comments: JSON.parse(localStorage.getItem(STORAGE_KEYS.COMMENTS) || '[]')
         .filter((comment: any) => comment.projectId === website.id),
       packageDate: new Date().toISOString(),

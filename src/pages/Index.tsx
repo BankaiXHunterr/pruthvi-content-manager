@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import Header from '../components/Header';
 import FilterBar from '../components/FilterBar';
@@ -11,7 +12,7 @@ import { mockWebsites } from '../data/mockData';
 import { StorageUtils } from '../utils/storage';
 import { useAuth } from '../contexts/AuthContext';
 import { ROLE_PERMISSIONS } from '../types/auth';
-import { WebsiteStatus } from '../types/auth';
+import { WebsiteStatus, CommentThread } from '../types/auth';
 
 const Index = () => {
   const [websites, setWebsites] = useState<Website[]>([]);
@@ -126,7 +127,7 @@ const Index = () => {
       return;
     }
 
-    if (website.status !== 'compliance-approved') {
+    if (website.status !== 'compliance-approved' && website.status !== 'ready-for-deployment') {
       showToast('Only compliance-approved websites can be downloaded', 'error');
       return;
     }
@@ -212,7 +213,7 @@ const Index = () => {
       return;
     }
 
-    if (website.status !== 'compliance-approved') {
+    if (website.status !== 'compliance-approved' && website.status !== 'ready-for-deployment') {
       showToast('Only compliance-approved websites can be deployed', 'error');
       return;
     }
@@ -226,6 +227,37 @@ const Index = () => {
     );
 
     showToast(`Project "${website.name}" deployed successfully`, 'success');
+  };
+
+  const handleStatusUpdate = (website: Website, newStatus: WebsiteStatus, thread?: CommentThread) => {
+    setWebsites(prev => 
+      prev.map(w => 
+        w.id === website.id 
+          ? { ...w, status: newStatus, lastUpdated: new Date().toLocaleDateString('en-GB') }
+          : w
+      )
+    );
+
+    let statusMessage = '';
+    switch (newStatus) {
+      case 'ready-for-deployment':
+        statusMessage = 'marked as ready for deployment';
+        break;
+      case 'ready-for-compliance-review':
+        statusMessage = 'marked as ready for compliance review';
+        break;
+      case 'marketing-review-in-progress':
+        statusMessage = 'sent back for marketing review';
+        break;
+      default:
+        statusMessage = 'status updated';
+    }
+
+    showToast(`Project "${website.name}" ${statusMessage}`, 'success');
+
+    if (thread) {
+      showToast(`New review thread created for "${website.name}"`, 'success');
+    }
   };
 
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -315,6 +347,7 @@ const Index = () => {
                 onDelete={handleDelete}
                 onApprove={handleApprove}
                 onDeploy={handleDeploy}
+                onStatusUpdate={handleStatusUpdate}
                 viewMode={viewMode}
               />
             ))}
