@@ -85,6 +85,7 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
       projectId: website.id,
       title: newThreadTitle,
       status: 'needs-revision',
+      createdBy: user.name,
       createdAt: new Date().toISOString(),
       comments: [{
         id: Date.now().toString(),
