@@ -1,5 +1,5 @@
 
-export type UserRole = 'marketing-creator' | 'marketing-reviewer' | 'compliance-reviewer' | 'developer';
+export type UserRole = 'marketing-creator' | 'marketing-reviewer' | 'compliance-reviewer' | 'admin' | 'website-developer';
 
 export type WebsiteStatus = 'draft' | 'marketing-review-completed' | 'compliance-approved' | 'deployed' | 'marketing-review-in-progress' | 'ready-for-compliance-review' | 'ready-for-deployment';
 
@@ -47,22 +47,22 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
   'marketing-creator': {
     canCreate: true,
     canEdit: true,
-    canDelete: true, // Only for draft status
-    canApprove: false,
+    canDelete: true,
+    canApprove: false, // Cannot use Approve button
     canComment: true,
-    canDownload: false,
-    canDeploy: false,
+    canDownload: false, // Cannot use Download button
+    canDeploy: true,
     canManageUsers: false,
-    canUpdateStatus: false
+    canUpdateStatus: true
   },
   'marketing-reviewer': {
-    canCreate: false,
+    canCreate: false, // Cannot use Create button
     canEdit: true,
-    canDelete: false,
-    canApprove: false,
+    canDelete: false, // Cannot use Delete button
+    canApprove: false, // Cannot use Approve button
     canComment: true,
-    canDownload: false,
-    canDeploy: false,
+    canDownload: false, // Cannot use Download button
+    canDeploy: true,
     canManageUsers: false,
     canUpdateStatus: true
   },
@@ -70,15 +70,15 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canCreate: false,
     canEdit: false,
     canDelete: false,
-    canApprove: true,
-    canComment: true,
-    canDownload: true,
+    canApprove: true, // Can only see and click Approve
+    canComment: true, // Can only see and click Comment
+    canDownload: false,
     canDeploy: false,
     canManageUsers: false,
-    canUpdateStatus: true
+    canUpdateStatus: false
   },
-  'developer': {
-    canCreate: true,
+  'admin': {
+    canCreate: true, // Full access to all features
     canEdit: true,
     canDelete: true,
     canApprove: true,
@@ -86,6 +86,17 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDownload: true,
     canDeploy: true,
     canManageUsers: true,
+    canUpdateStatus: true
+  },
+  'website-developer': {
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    canApprove: false,
+    canComment: false,
+    canDownload: true, // Can only see and click Download
+    canDeploy: false,
+    canManageUsers: false,
     canUpdateStatus: false
   }
 };
@@ -104,7 +115,8 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   'marketing-creator': 'Marketing Creator',
   'marketing-reviewer': 'Marketing Reviewer',
   'compliance-reviewer': 'Compliance Reviewer',
-  'developer': 'Developer'
+  'admin': 'Admin',
+  'website-developer': 'Website Developer'
 };
 
 export const THREAD_STATUS_LABELS: Record<ThreadStatus, string> = {

@@ -160,12 +160,15 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   if (!user) return null;
 
   const permissions = ROLE_PERMISSIONS[user.role];
+  
+  // Role-based permission checks based on exact specifications
   const canDelete = permissions.canDelete && website.status === 'draft';
   const canEdit = permissions.canEdit;
-  const canApprove = permissions.canApprove && website.status === 'marketing-review-completed';
+  const canApprove = permissions.canApprove;
   const canDownload = permissions.canDownload && (website.status === 'compliance-approved' || website.status === 'deployed');
   const canDeploy = permissions.canDeploy && (website.status === 'compliance-approved' || website.status === 'ready-for-deployment');
   const canUpdateStatus = permissions.canUpdateStatus;
+  const canComment = permissions.canComment;
 
   // Calculate total thread comment count
   const totalThreadComments = projectThreads.reduce((total, thread) => total + thread.comments.length, 0);
@@ -242,19 +245,21 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
                   Download
                 </Button>
               )}
-              <Button
-                onClick={handleCommentsClick}
-                variant="outline"
-                className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
-              >
-                <MessageSquare className="h-4 w-4 mr-1" />
-                Comments
-                {displayCommentCount > 0 && (
-                  <span className="ml-1 bg-icici-orange text-white text-xs rounded-full px-2 py-0.5">
-                    {displayCommentCount}
-                  </span>
-                )}
-              </Button>
+              {canComment && (
+                <Button
+                  onClick={handleCommentsClick}
+                  variant="outline"
+                  className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+                >
+                  <MessageSquare className="h-4 w-4 mr-1" />
+                  Comments
+                  {displayCommentCount > 0 && (
+                    <span className="ml-1 bg-icici-orange text-white text-xs rounded-full px-2 py-0.5">
+                      {displayCommentCount}
+                    </span>
+                  )}
+                </Button>
+              )}
               {canApprove && (
                 <Button
                   onClick={handleApproveClick}
@@ -439,18 +444,20 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
                 <Download className="h-4 w-4" />
               </Button>
             )}
-            <Button
-              onClick={handleCommentsClick}
-              variant="outline"
-              className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md relative"
-            >
-              <MessageSquare className="h-4 w-4" />
-              {displayCommentCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
-                  {displayCommentCount}
-                </span>
-              )}
-            </Button>
+            {canComment && (
+              <Button
+                onClick={handleCommentsClick}
+                variant="outline"
+                className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md relative"
+              >
+                <MessageSquare className="h-4 w-4" />
+                {displayCommentCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                    {displayCommentCount}
+                  </span>
+                )}
+              </Button>
+            )}
             {canApprove && (
               <Button
                 onClick={handleApproveClick}

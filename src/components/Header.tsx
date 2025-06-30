@@ -43,8 +43,10 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
         return 'bg-purple-100 text-purple-800';
       case 'compliance-reviewer':
         return 'bg-green-100 text-green-800';
-      case 'developer':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'admin':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'website-developer':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -75,10 +77,10 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
 
         {/* Right - Role Selector & User Menu */}
         <div className="flex items-center space-x-4">
-          {/* Role Selector - Only show for developer role */}
-          {user.role === 'developer' && (
+          {/* Role Selector - Only show for admin role */}
+          {user.role === 'admin' && (
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-orange-600" />
+              <Shield className="h-4 w-4 text-red-600" />
               <Select value={user.role} onValueChange={(value: UserRole) => switchRole(value)}>
                 <SelectTrigger className="w-48 border-gray-300">
                   <SelectValue />
@@ -87,7 +89,8 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
                   <SelectItem value="marketing-creator">Marketing Creator</SelectItem>
                   <SelectItem value="marketing-reviewer">Marketing Reviewer</SelectItem>
                   <SelectItem value="compliance-reviewer">Compliance Reviewer</SelectItem>
-                  <SelectItem value="developer">Developer</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="website-developer">Website Developer</SelectItem>
                 </SelectContent>
               </Select>
             </div>

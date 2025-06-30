@@ -68,7 +68,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
             </SelectContent>
           </Select>
 
-          {/* Create Button */}
+          {/* Create Button - only show if user has permission */}
           {permissions.canCreate && (
             <Button
               onClick={onCreateClick}
@@ -79,8 +79,8 @@ const FilterBar: React.FC<FilterBarProps> = ({
             </Button>
           )}
 
-          {/* Developer-specific deployment button placeholder */}
-          {user.role === 'developer' && (
+          {/* Admin-specific deployment button placeholder */}
+          {user.role === 'admin' && (
             <Button
               variant="outline"
               className="border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"

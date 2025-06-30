@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const MOCK_USERS: User[] = [
   {
     id: '1',
-    name: 'Sarah Marketing',
+    name: 'Sarah Creator',
     email: 'sarah@company.com',
     role: 'marketing-creator'
   },
@@ -35,9 +35,15 @@ const MOCK_USERS: User[] = [
   },
   {
     id: '4',
-    name: 'Alex Developer',
+    name: 'Alex Admin',
     email: 'alex@company.com',
-    role: 'developer'
+    role: 'admin'
+  },
+  {
+    id: '5',
+    name: 'Mike Developer',
+    email: 'mike@company.com',
+    role: 'website-developer'
   }
 ];
 
