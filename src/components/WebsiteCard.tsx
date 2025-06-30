@@ -56,8 +56,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   const [thumbnailLoading, setThumbnailLoading] = useState(true);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isStatusUpdateModalOpen, setIsStatusUpdateModalOpen] = useState(false);
-  const [isThreadModalOpen, setIsThreadModalOpen] = useState(false);
-  const [selectedThread, setSelectedThread] = useState<CommentThread | null>(null);
+  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [projectThreads, setProjectThreads] = useState<CommentThread[]>([]);
   const { user } = useAuth();
 
@@ -147,16 +146,15 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
     }
   };
 
+  const handleCommentsClick = () => {
+    setIsCommentsModalOpen(true);
+  };
+
   const handleThreadUpdate = (updatedThread: CommentThread) => {
     const allThreads = StorageUtils.loadThreads();
     const updatedThreads = allThreads.map(t => t.id === updatedThread.id ? updatedThread : t);
     StorageUtils.saveThreads(updatedThreads);
     setProjectThreads(StorageUtils.getProjectThreads(website.id));
-  };
-
-  const handleViewThread = (thread: CommentThread) => {
-    setSelectedThread(thread);
-    setIsThreadModalOpen(true);
   };
 
   if (!user) return null;
@@ -168,6 +166,10 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   const canDownload = permissions.canDownload && (website.status === 'compliance-approved' || website.status === 'deployed');
   const canDeploy = permissions.canDeploy && (website.status === 'compliance-approved' || website.status === 'ready-for-deployment');
   const canUpdateStatus = permissions.canUpdateStatus;
+
+  // Calculate total thread comment count
+  const totalThreadComments = projectThreads.reduce((total, thread) => total + thread.comments.length, 0);
+  const displayCommentCount = (website.commentCount || 0) + totalThreadComments;
 
   if (viewMode === 'list') {
     return (
@@ -208,23 +210,6 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
                   </TooltipProvider>
                 </div>
                 <p className="text-sm text-gray-600 mb-2">{website.description}</p>
-                
-                {/* Thread indicators */}
-                {projectThreads.length > 0 && (
-                  <div className="flex gap-2 mt-2">
-                    {projectThreads.map((thread) => (
-                      <Button
-                        key={thread.id}
-                        onClick={() => handleViewThread(thread)}
-                        variant="outline"
-                        size="sm"
-                        className="text-xs border-orange-300 text-orange-600 hover:bg-orange-50"
-                      >
-                        {thread.title} ({thread.comments.length})
-                      </Button>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
             <div className="ml-4 flex gap-2">
@@ -258,15 +243,15 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
                 </Button>
               )}
               <Button
-                onClick={() => onViewComments(website)}
+                onClick={handleCommentsClick}
                 variant="outline"
                 className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
               >
                 <MessageSquare className="h-4 w-4 mr-1" />
                 Comments
-                {website.commentCount && website.commentCount > 0 && (
+                {displayCommentCount > 0 && (
                   <span className="ml-1 bg-icici-orange text-white text-xs rounded-full px-2 py-0.5">
-                    {website.commentCount}
+                    {displayCommentCount}
                   </span>
                 )}
               </Button>
@@ -359,10 +344,13 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
         />
 
         <ThreadedCommentModal
-          thread={selectedThread}
-          isOpen={isThreadModalOpen}
-          onClose={() => setIsThreadModalOpen(false)}
+          thread={null}
+          isOpen={isCommentsModalOpen}
+          onClose={() => setIsCommentsModalOpen(false)}
           onUpdateThread={handleThreadUpdate}
+          website={website}
+          projectThreads={projectThreads}
+          onViewComments={onViewComments}
         />
       </>
     );
@@ -420,25 +408,6 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
           )}
         </div>
 
-        {/* Thread indicators for grid view */}
-        {projectThreads.length > 0 && (
-          <div className="mb-4">
-            <div className="flex flex-wrap gap-1">
-              {projectThreads.map((thread) => (
-                <Button
-                  key={thread.id}
-                  onClick={() => handleViewThread(thread)}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs border-orange-300 text-orange-600 hover:bg-orange-50"
-                >
-                  Thread ({thread.comments.length})
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
-
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-400">
             Updated: {website.lastUpdated}
@@ -471,14 +440,14 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
               </Button>
             )}
             <Button
-              onClick={() => onViewComments(website)}
+              onClick={handleCommentsClick}
               variant="outline"
               className="border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md relative"
             >
               <MessageSquare className="h-4 w-4" />
-              {website.commentCount && website.commentCount > 0 && (
+              {displayCommentCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
-                  {website.commentCount}
+                  {displayCommentCount}
                 </span>
               )}
             </Button>
@@ -561,10 +530,13 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
       />
 
       <ThreadedCommentModal
-        thread={selectedThread}
-        isOpen={isThreadModalOpen}
-        onClose={() => setIsThreadModalOpen(false)}
+        thread={null}
+        isOpen={isCommentsModalOpen}
+        onClose={() => setIsCommentsModalOpen(false)}
         onUpdateThread={handleThreadUpdate}
+        website={website}
+        projectThreads={projectThreads}
+        onViewComments={onViewComments}
       />
     </>
   );
