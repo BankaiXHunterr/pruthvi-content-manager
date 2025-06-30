@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { MessageSquare, User, Clock, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { MessageSquare, User, Clock, Plus, ChevronDown, ChevronRight, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { CommentThread, Comment, ThreadStatus, THREAD_STATUS_LABELS } from '../types/auth';
 import { Website } from './WebsiteCard';
@@ -35,6 +35,7 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
   const [showNewThreadForm, setShowNewThreadForm] = useState(false);
   const [selectedThread, setSelectedThread] = useState<CommentThread | null>(thread);
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
+  const [showThreadSettings, setShowThreadSettings] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -68,12 +69,12 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
     });
   };
 
-  const handleAddComment = () => {
-    if (!newComment.trim() || !selectedThread) return;
+  const handleAddComment = (threadToUpdate: CommentThread) => {
+    if (!newComment.trim()) return;
 
     const comment: Comment = {
       id: Date.now().toString(),
-      threadId: selectedThread.id,
+      threadId: threadToUpdate.id,
       content: newComment,
       author: user.name,
       authorRole: user.role,
@@ -81,12 +82,14 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
     };
 
     const updatedThread = {
-      ...selectedThread,
-      comments: [...selectedThread.comments, comment]
+      ...threadToUpdate,
+      comments: [...threadToUpdate.comments, comment]
     };
 
     onUpdateThread(updatedThread);
-    setSelectedThread(updatedThread);
+    if (selectedThread?.id === threadToUpdate.id) {
+      setSelectedThread(updatedThread);
+    }
     setNewComment('');
   };
 
@@ -101,7 +104,7 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
       createdBy: user.name,
       createdAt: new Date().toISOString(),
       comments: [{
-        id: Date.now().toString(),
+        id: (Date.now() + 1).toString(),
         threadId: Date.now().toString(),
         content: newComment,
         author: user.name,
@@ -111,74 +114,22 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
     };
 
     onUpdateThread(newThread);
-    setSelectedThread(newThread);
     setNewThreadTitle('');
     setNewComment('');
     setShowNewThreadForm(false);
   };
 
-  const handleSubmitForApproval = () => {
-    if (!newComment.trim() || !selectedThread) {
-      alert('Please add a comment describing the changes implemented.');
-      return;
+  const handleChangeThreadStatus = (threadToUpdate: CommentThread, newStatus: ThreadStatus) => {
+    const updatedThread = {
+      ...threadToUpdate,
+      status: newStatus
+    };
+
+    onUpdateThread(updatedThread);
+    if (selectedThread?.id === threadToUpdate.id) {
+      setSelectedThread(updatedThread);
     }
-
-    const comment: Comment = {
-      id: Date.now().toString(),
-      threadId: selectedThread.id,
-      content: `Changes implemented: ${newComment}`,
-      author: user.name,
-      authorRole: user.role,
-      createdAt: new Date().toISOString()
-    };
-
-    const updatedThread = {
-      ...selectedThread,
-      status: 'in-progress' as ThreadStatus,
-      comments: [...selectedThread.comments, comment]
-    };
-
-    onUpdateThread(updatedThread);
-    setSelectedThread(updatedThread);
-    setNewComment('');
-  };
-
-  const handleMarkAsApproved = () => {
-    if (!selectedThread) return;
-
-    const updatedThread = {
-      ...selectedThread,
-      status: 'completed' as ThreadStatus
-    };
-
-    onUpdateThread(updatedThread);
-    setSelectedThread(updatedThread);
-  };
-
-  const handleMarkAsNeedsRevision = () => {
-    if (!newComment.trim() || !selectedThread) {
-      alert('Please provide details about the required changes.');
-      return;
-    }
-
-    const comment: Comment = {
-      id: Date.now().toString(),
-      threadId: selectedThread.id,
-      content: `Additional changes required: ${newComment}`,
-      author: user.name,
-      authorRole: user.role,
-      createdAt: new Date().toISOString()
-    };
-
-    const updatedThread = {
-      ...selectedThread,
-      status: 'needs-revision' as ThreadStatus,
-      comments: [...selectedThread.comments, comment]
-    };
-
-    onUpdateThread(updatedThread);
-    setSelectedThread(updatedThread);
-    setNewComment('');
+    setShowThreadSettings(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -191,11 +142,9 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
     });
   };
 
-  const handleRegularComment = () => {
-    if (website && onViewComments) {
-      onViewComments(website);
-    }
-  };
+  // Check permissions
+  const canCreateThreads = user.role === 'compliance-reviewer';
+  const canManageThreadStatus = user.role === 'compliance-reviewer';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -212,17 +161,19 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Discussion Threads</h3>
-                <Button
-                  onClick={() => setShowNewThreadForm(!showNewThreadForm)}
-                  className="bg-orange-600 hover:bg-orange-700 text-white"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Thread
-                </Button>
+                {canCreateThreads && (
+                  <Button
+                    onClick={() => setShowNewThreadForm(!showNewThreadForm)}
+                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Thread
+                  </Button>
+                )}
               </div>
 
               {/* New Thread Form */}
-              {showNewThreadForm && (
+              {showNewThreadForm && canCreateThreads && (
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                   <div className="space-y-3">
                     <Input
@@ -266,6 +217,16 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
                             </Badge>
                           </div>
                           <div className="flex items-center gap-2">
+                            {canManageThreadStatus && (
+                              <Button
+                                onClick={() => setShowThreadSettings(showThreadSettings === thread.id ? null : thread.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="p-1 h-8 w-8"
+                              >
+                                <Settings className="h-4 w-4" />
+                              </Button>
+                            )}
                             <span className="text-xs text-gray-500">
                               {thread.comments.length} comment{thread.comments.length !== 1 ? 's' : ''}
                             </span>
@@ -283,6 +244,39 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
                             </Button>
                           </div>
                         </div>
+
+                        {/* Thread Settings */}
+                        {showThreadSettings === thread.id && canManageThreadStatus && (
+                          <div className="mb-3 p-3 bg-gray-50 rounded border">
+                            <p className="text-sm font-medium mb-2">Change Thread Status:</p>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleChangeThreadStatus(thread, 'needs-revision')}
+                                variant="outline"
+                                size="sm"
+                                className="border-red-300 text-red-600 hover:bg-red-50 text-xs"
+                              >
+                                Needs Revision
+                              </Button>
+                              <Button
+                                onClick={() => handleChangeThreadStatus(thread, 'in-progress')}
+                                variant="outline"
+                                size="sm"
+                                className="border-blue-300 text-blue-600 hover:bg-blue-50 text-xs"
+                              >
+                                In Progress
+                              </Button>
+                              <Button
+                                onClick={() => handleChangeThreadStatus(thread, 'completed')}
+                                variant="outline"
+                                size="sm"
+                                className="border-green-300 text-green-600 hover:bg-green-50 text-xs"
+                              >
+                                Completed
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                         
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           <span>Created by {thread.createdBy}</span>
@@ -328,7 +322,7 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
                               ))}
                             </div>
 
-                            {/* Reply Section for Selected Thread */}
+                            {/* Reply Section - Only if thread is not completed */}
                             {thread.status !== 'completed' && (
                               <>
                                 <div className="mb-3">
@@ -345,59 +339,28 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
                                 </div>
 
                                 <div className="flex gap-2 flex-wrap">
-                                  {user.role === 'marketing-reviewer' && thread.status === 'needs-revision' && (
-                                    <Button
-                                      onClick={() => {
-                                        setSelectedThread(thread);
-                                        handleSubmitForApproval();
-                                      }}
-                                      size="sm"
-                                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
-                                    >
-                                      Submit for Approval
-                                    </Button>
-                                  )}
-
-                                  {user.role === 'compliance-reviewer' && thread.status === 'in-progress' && (
-                                    <>
-                                      <Button
-                                        onClick={() => {
-                                          setSelectedThread(thread);
-                                          handleMarkAsApproved();
-                                        }}
-                                        size="sm"
-                                        className="bg-green-600 hover:bg-green-700 text-white text-xs"
-                                      >
-                                        Mark as Approved
-                                      </Button>
-                                      <Button
-                                        onClick={() => {
-                                          setSelectedThread(thread);
-                                          handleMarkAsNeedsRevision();
-                                        }}
-                                        variant="outline"
-                                        size="sm"
-                                        className="border-orange-300 text-orange-600 hover:bg-orange-50 text-xs"
-                                      >
-                                        Mark as Needs Revision
-                                      </Button>
-                                    </>
-                                  )}
-
                                   <Button
                                     onClick={() => {
                                       setSelectedThread(thread);
-                                      handleAddComment();
+                                      handleAddComment(thread);
                                     }}
                                     variant="outline"
                                     size="sm"
                                     className="border-gray-300 text-xs"
+                                    disabled={!newComment.trim()}
                                   >
                                     <MessageSquare className="h-3 w-3 mr-1" />
                                     Add Comment
                                   </Button>
                                 </div>
                               </>
+                            )}
+
+                            {/* Show message when thread is completed */}
+                            {thread.status === 'completed' && (
+                              <div className="text-center py-3 text-gray-500 text-sm">
+                                This thread has been marked as completed. No further comments can be added.
+                              </div>
                             )}
                           </div>
                         </div>
@@ -411,7 +374,9 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
                 <div className="text-center py-8 text-gray-500">
                   <MessageSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                   <p>No discussion threads yet.</p>
-                  <p className="text-sm">Create a new thread to start the conversation.</p>
+                  {canCreateThreads && (
+                    <p className="text-sm">Create a new thread to start the conversation.</p>
+                  )}
                 </div>
               )}
             </div>

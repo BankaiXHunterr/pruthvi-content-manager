@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,6 +27,7 @@ export interface Website {
   url?: string;
   commentCount?: number;
   thumbailUrl?: string;
+  isUpdated?: boolean;
 }
 
 interface WebsiteCardProps {
@@ -58,7 +58,9 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
+  const [isUrlSubmissionModalOpen, setIsUrlSubmissionModalOpen] = useState(false);
   const [deployUrl, setDeployUrl] = useState('');
+  const [submissionUrl, setSubmissionUrl] = useState('');
   const [projectThreads, setProjectThreads] = useState<CommentThread[]>([]);
   const { user } = useAuth();
 
@@ -145,10 +147,38 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
     }
   };
 
+  const handleUrlSubmissionClick = () => {
+    setIsUrlSubmissionModalOpen(true);
+  };
+
+  const handleUrlSubmissionConfirm = () => {
+    if (submissionUrl.trim()) {
+      // Mark website as updated
+      const updatedWebsite = { ...website, isUpdated: true, url: submissionUrl };
+      // In a real app, this would trigger a callback to update the website
+      console.log('Website marked as updated:', updatedWebsite);
+      setIsUrlSubmissionModalOpen(false);
+      setSubmissionUrl('');
+      // Force re-render by updating parent component if possible
+      if (onStatusUpdate) {
+        onStatusUpdate(updatedWebsite, website.status);
+      }
+    }
+  };
+
   const handleThreadUpdate = (updatedThread: CommentThread) => {
     const allThreads = StorageUtils.loadThreads();
-    const updatedThreads = allThreads.map(t => t.id === updatedThread.id ? updatedThread : t);
-    StorageUtils.saveThreads(updatedThreads);
+    const existingThreadIndex = allThreads.findIndex(t => t.id === updatedThread.id);
+    
+    if (existingThreadIndex >= 0) {
+      // Update existing thread
+      allThreads[existingThreadIndex] = updatedThread;
+    } else {
+      // Add new thread
+      allThreads.push(updatedThread);
+    }
+    
+    StorageUtils.saveThreads(allThreads);
     setProjectThreads(StorageUtils.getProjectThreads(website.id));
   };
 
@@ -174,6 +204,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   const canDeploy = permissions.canDeploy && (website.status === 'compliance-approved' || website.status === 'ready-for-deployment');
   const canUpdateStatus = permissions.canUpdateStatus;
   const canComment = permissions.canComment;
+  const canSubmitUrl = user.role === 'website-developer';
 
   // Calculate total thread comment count
   const totalThreadComments = projectThreads.reduce((total, thread) => total + thread.comments.length, 0);
@@ -202,9 +233,16 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h3 className="text-lg font-semibold text-icici-darkGray">{website.name}</h3>
-                  <Badge className={`text-xs ${getStatusColor(website.status)}`}>
-                    {STATUS_LABELS[website.status]}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={`text-xs ${getStatusColor(website.status)}`}>
+                      {STATUS_LABELS[website.status]}
+                    </Badge>
+                    {website.isUpdated && (
+                      <Badge variant="updated" className="text-xs">
+                        Updated
+                      </Badge>
+                    )}
+                  </div>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
@@ -221,6 +259,14 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
               </div>
             </div>
             <div className="ml-4 flex gap-2">
+              {canSubmitUrl && (
+                <Button
+                  onClick={handleUrlSubmissionClick}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md transition-colors duration-200"
+                >
+                  Submit URL
+                </Button>
+              )}
               {canDeploy && (
                 <Button
                   onClick={handleDeployClick}
@@ -285,42 +331,42 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
           </div>
         </div>
 
-        {/* Deploy Modal */}
-        <Dialog open={isDeployModalOpen} onOpenChange={setIsDeployModalOpen}>
+        {/* URL Submission Modal */}
+        <Dialog open={isUrlSubmissionModalOpen} onOpenChange={setIsUrlSubmissionModalOpen}>
           <DialogContent className="sm:max-w-[500px] bg-white">
             <DialogHeader>
               <DialogTitle className="text-xl font-semibold text-icici-darkGray">
-                Deploy Website - {website.name}
+                Submit Deployed URL - {website.name}
               </DialogTitle>
             </DialogHeader>
             <div className="py-4">
               <div className="mb-4">
-                <label htmlFor="deployUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="submissionUrl" className="block text-sm font-medium text-gray-700 mb-2">
                   Deployed URL
                 </label>
                 <Input
-                  id="deployUrl"
+                  id="submissionUrl"
                   type="url"
                   placeholder="https://example.com"
-                  value={deployUrl}
-                  onChange={(e) => setDeployUrl(e.target.value)}
+                  value={submissionUrl}
+                  onChange={(e) => setSubmissionUrl(e.target.value)}
                   className="w-full"
                 />
               </div>
               <div className="flex justify-end gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => setIsDeployModalOpen(false)}
+                  onClick={() => setIsUrlSubmissionModalOpen(false)}
                   className="px-6 py-2 border-gray-300 hover:bg-gray-50"
                 >
                   Cancel
                 </Button>
                 <Button
-                  onClick={handleDeployConfirm}
-                  disabled={!deployUrl.trim()}
-                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+                  onClick={handleUrlSubmissionConfirm}
+                  disabled={!submissionUrl.trim()}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                 >
-                  Deploy
+                  Submit
                 </Button>
               </div>
             </div>
@@ -412,9 +458,16 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <Badge className={`text-xs mb-3 ${getStatusColor(website.status)}`}>
-              {STATUS_LABELS[website.status]}
-            </Badge>
+            <div className="flex items-center gap-2 mb-3">
+              <Badge className={`text-xs ${getStatusColor(website.status)}`}>
+                {STATUS_LABELS[website.status]}
+              </Badge>
+              {website.isUpdated && (
+                <Badge variant="updated" className="text-xs">
+                  Updated
+                </Badge>
+              )}
+            </div>
           </div>
           {canDelete && (
             <Button
@@ -448,6 +501,14 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
             Updated: {website.lastUpdated}
           </span>
           <div className="flex gap-2 flex-wrap">
+            {canSubmitUrl && (
+              <Button
+                onClick={handleUrlSubmissionClick}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
+              >
+                Submit URL
+              </Button>
+            )}
             {canDeploy && (
               <Button
                 onClick={handleDeployClick}
@@ -498,6 +559,48 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* URL Submission Modal */}
+      <Dialog open={isUrlSubmissionModalOpen} onOpenChange={setIsUrlSubmissionModalOpen}>
+        <DialogContent className="sm:max-w-[500px] bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-icici-darkGray">
+              Submit Deployed URL - {website.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="mb-4">
+              <label htmlFor="submissionUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                Deployed URL
+              </label>
+              <Input
+                id="submissionUrl"
+                type="url"
+                placeholder="https://example.com"
+                value={submissionUrl}
+                onChange={(e) => setSubmissionUrl(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsUrlSubmissionModalOpen(false)}
+                className="px-6 py-2 border-gray-300 hover:bg-gray-50"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUrlSubmissionConfirm}
+                disabled={!submissionUrl.trim()}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Deploy Modal */}
       <Dialog open={isDeployModalOpen} onOpenChange={setIsDeployModalOpen}>

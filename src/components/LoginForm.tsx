@@ -28,7 +28,8 @@ const LoginForm: React.FC = () => {
     { email: 'sarah@company.com', role: 'marketing-creator' as const },
     { email: 'john@company.com', role: 'marketing-reviewer' as const },
     { email: 'lisa@company.com', role: 'compliance-reviewer' as const },
-    { email: 'alex@company.com', role: 'developer' as const },
+    { email: 'alex@company.com', role: 'admin' as const },
+    { email: 'mike@company.com', role: 'website-developer' as const },
   ];
 
   const getRoleBadgeColor = (role: string) => {
@@ -39,7 +40,9 @@ const LoginForm: React.FC = () => {
         return 'bg-purple-100 text-purple-800';
       case 'compliance-reviewer':
         return 'bg-green-100 text-green-800';
-      case 'developer':
+      case 'admin':
+        return 'bg-red-100 text-red-800';
+      case 'website-developer':
         return 'bg-orange-100 text-orange-800';
       default:
         return 'bg-gray-100 text-gray-800';
