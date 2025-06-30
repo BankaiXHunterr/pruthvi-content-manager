@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { MessageSquare, User, Clock, Plus } from 'lucide-react';
+import { MessageSquare, User, Clock, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { CommentThread, Comment, ThreadStatus, THREAD_STATUS_LABELS } from '../types/auth';
 import { Website } from './WebsiteCard';
@@ -34,6 +34,7 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
   const [newThreadTitle, setNewThreadTitle] = useState('');
   const [showNewThreadForm, setShowNewThreadForm] = useState(false);
   const [selectedThread, setSelectedThread] = useState<CommentThread | null>(thread);
+  const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
   const { user } = useAuth();
 
   useEffect(() => {
@@ -53,6 +54,18 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
+  };
+
+  const toggleThreadExpanded = (threadId: string) => {
+    setExpandedThreads(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(threadId)) {
+        newSet.delete(threadId);
+      } else {
+        newSet.add(threadId);
+      }
+      return newSet;
+    });
   };
 
   const handleAddComment = () => {
@@ -189,16 +202,16 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
       <DialogContent className="sm:max-w-[800px] max-h-[80vh] bg-white overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-gray-900">
-            {website ? `Comments & Threads - ${website.name}` : 'Thread Discussion'}
+            {website ? `Review Threads - ${website.name}` : 'Thread Discussion'}
           </DialogTitle>
         </DialogHeader>
         
         <div className="py-4">
-          {/* Thread Selection */}
+          {/* Thread Management */}
           {website && (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Review Threads</h3>
+                <h3 className="text-lg font-semibold">Discussion Threads</h3>
                 <Button
                   onClick={() => setShowNewThreadForm(!showNewThreadForm)}
                   className="bg-orange-600 hover:bg-orange-700 text-white"
@@ -235,131 +248,170 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
                 </div>
               )}
 
-              {/* Thread List */}
+              {/* Thread List with Expandable Comments */}
               {projectThreads.length > 0 && (
-                <div className="space-y-2 mb-4">
+                <div className="space-y-3 mb-4">
                   {projectThreads.map((thread) => (
                     <div
                       key={thread.id}
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                        selectedThread?.id === thread.id 
-                          ? 'border-orange-300 bg-orange-50' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => setSelectedThread(thread)}
+                      className="border border-gray-200 rounded-lg overflow-hidden"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{thread.title}</span>
-                        <div className="flex items-center gap-2">
-                          <Badge className={`text-xs ${getStatusColor(thread.status)}`}>
-                            {THREAD_STATUS_LABELS[thread.status]}
-                          </Badge>
-                          <span className="text-xs text-gray-500">
-                            {thread.comments.length} comments
-                          </span>
+                      {/* Thread Header */}
+                      <div className="p-4 bg-white">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3 flex-1">
+                            <h4 className="font-medium text-gray-900">{thread.title}</h4>
+                            <Badge className={`text-xs ${getStatusColor(thread.status)}`}>
+                              {THREAD_STATUS_LABELS[thread.status]}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">
+                              {thread.comments.length} comment{thread.comments.length !== 1 ? 's' : ''}
+                            </span>
+                            <Button
+                              onClick={() => toggleThreadExpanded(thread.id)}
+                              variant="ghost"
+                              size="sm"
+                              className="p-1 h-8 w-8"
+                            >
+                              {expandedThreads.has(thread.id) ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
+                        
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <span>Created by {thread.createdBy}</span>
+                          <span>•</span>
+                          <span>{formatDate(thread.createdAt)}</span>
+                        </div>
+                        
+                        {!expandedThreads.has(thread.id) && (
+                          <Button
+                            onClick={() => toggleThreadExpanded(thread.id)}
+                            variant="outline"
+                            size="sm"
+                            className="mt-3 text-xs"
+                          >
+                            Show All Comments
+                          </Button>
+                        )}
                       </div>
+
+                      {/* Expanded Comments */}
+                      {expandedThreads.has(thread.id) && (
+                        <div className="border-t border-gray-200 bg-gray-50">
+                          <div className="p-4">
+                            {/* Comments List */}
+                            <div className="space-y-3 mb-4">
+                              {thread.comments.map((comment) => (
+                                <div key={comment.id} className="bg-white p-3 rounded border">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                      <User className="h-4 w-4 text-gray-500" />
+                                      <span className="font-semibold text-sm">{comment.author}</span>
+                                      <Badge variant="outline" className="text-xs">
+                                        {comment.authorRole.replace('-', ' ')}
+                                      </Badge>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                                      <Clock className="h-3 w-3" />
+                                      {formatDate(comment.createdAt)}
+                                    </div>
+                                  </div>
+                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.content}</p>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Reply Section for Selected Thread */}
+                            {thread.status !== 'completed' && (
+                              <>
+                                <div className="mb-3">
+                                  <Textarea
+                                    placeholder="Add your reply..."
+                                    value={selectedThread?.id === thread.id ? newComment : ''}
+                                    onChange={(e) => {
+                                      setSelectedThread(thread);
+                                      setNewComment(e.target.value);
+                                    }}
+                                    rows={2}
+                                    className="text-sm"
+                                  />
+                                </div>
+
+                                <div className="flex gap-2 flex-wrap">
+                                  {user.role === 'marketing-reviewer' && thread.status === 'needs-revision' && (
+                                    <Button
+                                      onClick={() => {
+                                        setSelectedThread(thread);
+                                        handleSubmitForApproval();
+                                      }}
+                                      size="sm"
+                                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                                    >
+                                      Submit for Approval
+                                    </Button>
+                                  )}
+
+                                  {user.role === 'compliance-reviewer' && thread.status === 'in-progress' && (
+                                    <>
+                                      <Button
+                                        onClick={() => {
+                                          setSelectedThread(thread);
+                                          handleMarkAsApproved();
+                                        }}
+                                        size="sm"
+                                        className="bg-green-600 hover:bg-green-700 text-white text-xs"
+                                      >
+                                        Mark as Approved
+                                      </Button>
+                                      <Button
+                                        onClick={() => {
+                                          setSelectedThread(thread);
+                                          handleMarkAsNeedsRevision();
+                                        }}
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-orange-300 text-orange-600 hover:bg-orange-50 text-xs"
+                                      >
+                                        Mark as Needs Revision
+                                      </Button>
+                                    </>
+                                  )}
+
+                                  <Button
+                                    onClick={() => {
+                                      setSelectedThread(thread);
+                                      handleAddComment();
+                                    }}
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-gray-300 text-xs"
+                                  >
+                                    <MessageSquare className="h-3 w-3 mr-1" />
+                                    Add Comment
+                                  </Button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Regular Comments Button */}
-              <div className="border-t pt-4">
-                <Button
-                  onClick={handleRegularComment}
-                  variant="outline"
-                  className="w-full border-icici-orange text-icici-orange hover:bg-icici-orange hover:text-white"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  View Regular Comments
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Selected Thread Discussion */}
-          {selectedThread && (
-            <div className="border-t pt-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">{selectedThread.title}</h3>
-                <Badge className={`text-xs ${getStatusColor(selectedThread.status)}`}>
-                  {THREAD_STATUS_LABELS[selectedThread.status]}
-                </Badge>
-              </div>
-
-              {/* Comments List */}
-              <div className="space-y-4 mb-6">
-                {selectedThread.comments.map((comment) => (
-                  <div key={comment.id} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-500" />
-                        <span className="font-semibold text-sm">{comment.author}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {comment.authorRole.replace('-', ' ')}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Clock className="h-3 w-3" />
-                        {formatDate(comment.createdAt)}
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.content}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Reply Section */}
-              {selectedThread.status !== 'completed' && (
-                <div className="border-t pt-4">
-                  <div className="mb-4">
-                    <Textarea
-                      placeholder="Add your reply..."
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      rows={3}
-                      className="mb-3"
-                    />
-                  </div>
-
-                  <div className="flex gap-2 flex-wrap">
-                    {user.role === 'marketing-reviewer' && selectedThread.status === 'needs-revision' && (
-                      <Button
-                        onClick={handleSubmitForApproval}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        Submit for Approval
-                      </Button>
-                    )}
-
-                    {user.role === 'compliance-reviewer' && selectedThread.status === 'in-progress' && (
-                      <>
-                        <Button
-                          onClick={handleMarkAsApproved}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          Mark as Approved
-                        </Button>
-                        <Button
-                          onClick={handleMarkAsNeedsRevision}
-                          variant="outline"
-                          className="border-orange-300 text-orange-600 hover:bg-orange-50"
-                        >
-                          Mark as Needs Revision
-                        </Button>
-                      </>
-                    )}
-
-                    <Button
-                      onClick={handleAddComment}
-                      variant="outline"
-                      className="border-gray-300"
-                    >
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Add Comment
-                    </Button>
-                  </div>
+              {projectThreads.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p>No discussion threads yet.</p>
+                  <p className="text-sm">Create a new thread to start the conversation.</p>
                 </div>
               )}
             </div>

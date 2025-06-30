@@ -9,10 +9,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { WebsiteStatus, CommentThread } from '../types/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { ROLE_PERMISSIONS, STATUS_LABELS } from '../types/auth';
-import StatusUpdateModal from './StatusUpdateModal';
 import ThreadedCommentModal from './ThreadedCommentModal';
 import { StorageUtils } from '../utils/storage';
 
@@ -36,7 +36,7 @@ interface WebsiteCardProps {
   onDownload: (website: Website) => void;
   onDelete: (website: Website) => void;
   onApprove: (website: Website) => void;
-  onDeploy?: (website: Website) => void;
+  onDeploy?: (website: Website, deployUrl?: string) => void;
   onStatusUpdate?: (website: Website, newStatus: WebsiteStatus, thread?: CommentThread) => void;
   viewMode: 'grid' | 'list';
 }
@@ -55,8 +55,9 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [thumbnailLoading, setThumbnailLoading] = useState(true);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [isStatusUpdateModalOpen, setIsStatusUpdateModalOpen] = useState(false);
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
+  const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
+  const [deployUrl, setDeployUrl] = useState('');
   const [projectThreads, setProjectThreads] = useState<CommentThread[]>([]);
   const { user } = useAuth();
 
@@ -126,28 +127,21 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   };
 
   const handleDeployClick = () => {
-    if (window.confirm(`Are you sure you want to deploy "${website.name}" to production?`)) {
+    if (user?.role === 'website-developer') {
+      setIsDeployModalOpen(true);
+    } else if (window.confirm(`Are you sure you want to deploy "${website.name}" to production?`)) {
       if (onDeploy) {
         onDeploy(website);
       }
     }
   };
 
-  const handleStatusUpdate = (website: Website, newStatus: WebsiteStatus, thread?: CommentThread) => {
-    if (thread) {
-      const allThreads = StorageUtils.loadThreads();
-      const updatedThreads = [...allThreads, thread];
-      StorageUtils.saveThreads(updatedThreads);
-      setProjectThreads(StorageUtils.getProjectThreads(website.id));
+  const handleDeployConfirm = () => {
+    if (deployUrl.trim() && onDeploy) {
+      onDeploy(website, deployUrl);
+      setIsDeployModalOpen(false);
+      setDeployUrl('');
     }
-    
-    if (onStatusUpdate) {
-      onStatusUpdate(website, newStatus, thread);
-    }
-  };
-
-  const handleCommentsClick = () => {
-    setIsCommentsModalOpen(true);
   };
 
   const handleThreadUpdate = (updatedThread: CommentThread) => {
@@ -155,6 +149,16 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
     const updatedThreads = allThreads.map(t => t.id === updatedThread.id ? updatedThread : t);
     StorageUtils.saveThreads(updatedThreads);
     setProjectThreads(StorageUtils.getProjectThreads(website.id));
+  };
+
+  const handleCommentsClick = () => {
+    setIsCommentsModalOpen(true);
+  };
+
+  const handleVisitWebsite = () => {
+    if (website.url) {
+      window.open(website.url, '_blank');
+    }
   };
 
   if (!user) return null;
@@ -216,16 +220,6 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
               </div>
             </div>
             <div className="ml-4 flex gap-2">
-              {canUpdateStatus && (
-                <Button
-                  onClick={() => setIsStatusUpdateModalOpen(true)}
-                  variant="outline"
-                  className="border-purple-300 text-purple-600 hover:bg-purple-50 hover:text-purple-800 font-semibold px-4 py-2 rounded-md transition-colors duration-200"
-                >
-                  <Settings className="h-4 w-4 mr-1" />
-                  Update Status
-                </Button>
-              )}
               {canDeploy && (
                 <Button
                   onClick={handleDeployClick}
@@ -290,6 +284,48 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
           </div>
         </div>
 
+        {/* Deploy Modal */}
+        <Dialog open={isDeployModalOpen} onOpenChange={setIsDeployModalOpen}>
+          <DialogContent className="sm:max-w-[500px] bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-icici-darkGray">
+                Deploy Website - {website.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="mb-4">
+                <label htmlFor="deployUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                  Deployed URL
+                </label>
+                <Input
+                  id="deployUrl"
+                  type="url"
+                  placeholder="https://example.com"
+                  value={deployUrl}
+                  onChange={(e) => setDeployUrl(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDeployModalOpen(false)}
+                  className="px-6 py-2 border-gray-300 hover:bg-gray-50"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleDeployConfirm}
+                  disabled={!deployUrl.trim()}
+                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+                >
+                  Deploy
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
           <DialogContent className="sm:max-w-[800px] max-h-[90vh] bg-white">
             <DialogHeader>
@@ -340,13 +376,6 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
             </div>
           </DialogContent>
         </Dialog>
-
-        <StatusUpdateModal
-          website={website}
-          isOpen={isStatusUpdateModalOpen}
-          onClose={() => setIsStatusUpdateModalOpen(false)}
-          onStatusUpdate={handleStatusUpdate}
-        />
 
         <ThreadedCommentModal
           thread={null}
@@ -418,15 +447,6 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
             Updated: {website.lastUpdated}
           </span>
           <div className="flex gap-2 flex-wrap">
-            {canUpdateStatus && (
-              <Button
-                onClick={() => setIsStatusUpdateModalOpen(true)}
-                variant="outline"
-                className="border-purple-300 text-purple-600 hover:bg-purple-50 hover:text-purple-800 font-semibold px-3 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            )}
             {canDeploy && (
               <Button
                 onClick={handleDeployClick}
@@ -478,6 +498,47 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
         </div>
       </div>
 
+      {/* Deploy Modal */}
+      <Dialog open={isDeployModalOpen} onOpenChange={setIsDeployModalOpen}>
+        <DialogContent className="sm:max-w-[500px] bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-icici-darkGray">
+              Deploy Website - {website.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="mb-4">
+              <label htmlFor="deployUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                Deployed URL
+              </label>
+              <Input
+                id="deployUrl"
+                type="url"
+                placeholder="https://example.com"
+                value={deployUrl}
+                onChange={(e) => setDeployUrl(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsDeployModalOpen(false)}
+                className="px-6 py-2 border-gray-300 hover:bg-gray-50"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDeployConfirm}
+                disabled={!deployUrl.trim()}
+                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+              >
+                Deploy
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
       <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] bg-white">
           <DialogHeader>
@@ -516,10 +577,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
                 Close
               </Button>
               <Button
-                onClick={() => {
-                  window.open(website.url, '_blank');
-                  setIsPreviewModalOpen(false);
-                }}
+                onClick={handleVisitWebsite}
                 className="px-6 py-2 bg-icici-orange hover:bg-icici-red text-white font-semibold"
               >
                 Visit Website
@@ -528,13 +586,6 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
           </div>
         </DialogContent>
       </Dialog>
-
-      <StatusUpdateModal
-        website={website}
-        isOpen={isStatusUpdateModalOpen}
-        onClose={() => setIsStatusUpdateModalOpen(false)}
-        onStatusUpdate={handleStatusUpdate}
-      />
 
       <ThreadedCommentModal
         thread={null}
