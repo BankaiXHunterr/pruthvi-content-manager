@@ -6,16 +6,18 @@ import WebsiteCard, { Website } from '../components/WebsiteCard';
 import EditModal from '../components/EditModal';
 import CommentatorModal from '../components/CommentatorModal';
 import CreateModal from '../components/CreateModal';
+import BackendConfig from '../components/BackendConfig';
 import Toast from '../components/Toast';
 import LoadingCard from '../components/LoadingCard';
-import { mockWebsites } from '../data/mockData';
-import { StorageUtils } from '../utils/storage';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Settings, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { useRealTimeData } from '../hooks/useRealTimeData';
 import { useAuth } from '../contexts/AuthContext';
 import { ROLE_PERMISSIONS } from '../types/auth';
 import { WebsiteStatus, CommentThread } from '../types/auth';
 
 const Index = () => {
-  const [websites, setWebsites] = useState<Website[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -23,7 +25,7 @@ const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error';
@@ -35,32 +37,23 @@ const Index = () => {
   });
 
   const { user } = useAuth();
-
-  // Load websites from localStorage on component mount
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      const savedWebsites = StorageUtils.loadWebsites();
-      if (savedWebsites.length > 0) {
-        const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(savedWebsites);
-        setWebsites(websitesWithComments);
-      } else {
-        const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(mockWebsites);
-        setWebsites(websitesWithComments);
-        StorageUtils.saveWebsites(websitesWithComments);
-      }
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Save websites to localStorage whenever websites state changes
-  useEffect(() => {
-    if (websites.length > 0) {
-      StorageUtils.saveWebsites(websites);
-    }
-  }, [websites]);
+  
+  // Use real-time data hook
+  const {
+    websites,
+    isLoading,
+    isConnected,
+    error,
+    createWebsite,
+    updateWebsite,
+    deleteWebsite,
+    syncData,
+    loadInitialData
+  } = useRealTimeData({
+    enableWebSocket: true,
+    fallbackToStorage: true,
+    syncInterval: 30000
+  });
 
   // Filter websites based on search and status
   const filteredWebsites = useMemo(() => {
@@ -85,7 +78,7 @@ const Index = () => {
     setIsCommentsModalOpen(true);
   };
 
-  const handleDelete = (website: Website) => {
+  const handleDelete = async (website: Website) => {
     if (!user) return;
     
     const permissions = ROLE_PERMISSIONS[user.role];
@@ -94,11 +87,15 @@ const Index = () => {
       return;
     }
 
-    setWebsites(prev => prev.filter(w => w.id !== website.id));
-    showToast(`Project "${website.name}" deleted successfully`, 'success');
+    try {
+      await deleteWebsite(website.id);
+      showToast(`Project "${website.name}" deleted successfully`, 'success');
+    } catch (error) {
+      showToast('Failed to delete project', 'error');
+    }
   };
 
-  const handleApprove = (website: Website) => {
+  const handleApprove = async (website: Website) => {
     if (!user) return;
     
     const permissions = ROLE_PERMISSIONS[user.role];
@@ -107,15 +104,15 @@ const Index = () => {
       return;
     }
 
-    setWebsites(prev => 
-      prev.map(w => 
-        w.id === website.id 
-          ? { ...w, status: 'compliance-approved' as WebsiteStatus, lastUpdated: new Date().toLocaleDateString('en-GB') }
-          : w
-      )
-    );
-
-    showToast(`Project "${website.name}" approved successfully`, 'success');
+    try {
+      await updateWebsite(website.id, {
+        status: 'compliance-approved' as WebsiteStatus,
+        lastUpdated: new Date().toLocaleDateString('en-GB')
+      });
+      showToast(`Project "${website.name}" approved successfully`, 'success');
+    } catch (error) {
+      showToast('Failed to approve project', 'error');
+    }
   };
 
   const handleDownload = (website: Website) => {
@@ -133,6 +130,7 @@ const Index = () => {
     }
 
     // Create ZIP package
+    const { StorageUtils } = require('../utils/storage');
     const zipBlob = StorageUtils.createZipPackage(website);
     const fileName = `${website.name.toLowerCase().replace(/\s+/g, '-')}-approved-package.json`;
     
@@ -148,7 +146,7 @@ const Index = () => {
     showToast(`Downloaded compliance package for ${website.name}`, 'success');
   };
 
-  const handleSave = (website: Website, newContent: string) => {
+  const handleSave = async (website: Website, newContent: string) => {
     if (!user) return;
 
     const permissions = ROLE_PERMISSIONS[user.role];
@@ -164,23 +162,19 @@ const Index = () => {
       newStatus = 'marketing-review-completed';
     }
 
-    setWebsites(prev => 
-      prev.map(w => 
-        w.id === website.id 
-          ? { 
-              ...w, 
-              content: newContent, 
-              status: newStatus,
-              lastUpdated: new Date().toLocaleDateString('en-GB') 
-            }
-          : w
-      )
-    );
-
-    showToast(`Content updated successfully for ${website.name}`, 'success');
+    try {
+      await updateWebsite(website.id, {
+        content: newContent,
+        status: newStatus,
+        lastUpdated: new Date().toLocaleDateString('en-GB')
+      });
+      showToast(`Content updated successfully for ${website.name}`, 'success');
+    } catch (error) {
+      showToast('Failed to update content', 'error');
+    }
   };
 
-  const handleCreateProject = (newWebsite: Omit<Website, 'id'>) => {
+  const handleCreateProject = async (newWebsite: Omit<Website, 'id'>) => {
     if (!user) return;
     
     const permissions = ROLE_PERMISSIONS[user.role];
@@ -189,22 +183,25 @@ const Index = () => {
       return;
     }
 
-    const website: Website = {
+    const website: Omit<Website, 'id'> = {
       ...newWebsite,
-      id: Date.now().toString(),
       status: 'draft',
       commentCount: 0
     };
     
-    setWebsites(prev => [website, ...prev]);
-    showToast(`Project "${website.name}" created successfully`, 'success');
+    try {
+      await createWebsite(website);
+      showToast(`Project "${website.name}" created successfully`, 'success');
+    } catch (error) {
+      showToast('Failed to create project', 'error');
+    }
   };
 
   const handleLogout = () => {
     showToast('Logged out successfully', 'success');
   };
 
-  const handleDeploy = (website: Website) => {
+  const handleDeploy = async (website: Website) => {
     if (!user) return;
     
     const permissions = ROLE_PERMISSIONS[user.role];
@@ -218,45 +215,46 @@ const Index = () => {
       return;
     }
 
-    setWebsites(prev => 
-      prev.map(w => 
-        w.id === website.id 
-          ? { ...w, status: 'deployed' as WebsiteStatus, lastUpdated: new Date().toLocaleDateString('en-GB') }
-          : w
-      )
-    );
-
-    showToast(`Project "${website.name}" deployed successfully`, 'success');
+    try {
+      await updateWebsite(website.id, {
+        status: 'deployed' as WebsiteStatus,
+        lastUpdated: new Date().toLocaleDateString('en-GB')
+      });
+      showToast(`Project "${website.name}" deployed successfully`, 'success');
+    } catch (error) {
+      showToast('Failed to deploy project', 'error');
+    }
   };
 
-  const handleStatusUpdate = (website: Website, newStatus: WebsiteStatus, thread?: CommentThread) => {
-    setWebsites(prev => 
-      prev.map(w => 
-        w.id === website.id 
-          ? { ...w, status: newStatus, lastUpdated: new Date().toLocaleDateString('en-GB') }
-          : w
-      )
-    );
+  const handleStatusUpdate = async (website: Website, newStatus: WebsiteStatus, thread?: CommentThread) => {
+    try {
+      await updateWebsite(website.id, {
+        status: newStatus,
+        lastUpdated: new Date().toLocaleDateString('en-GB')
+      });
 
-    let statusMessage = '';
-    switch (newStatus) {
-      case 'ready-for-deployment':
-        statusMessage = 'marked as ready for deployment';
-        break;
-      case 'ready-for-compliance-review':
-        statusMessage = 'marked as ready for compliance review';
-        break;
-      case 'marketing-review-in-progress':
-        statusMessage = 'sent back for marketing review';
-        break;
-      default:
-        statusMessage = 'status updated';
-    }
+      let statusMessage = '';
+      switch (newStatus) {
+        case 'ready-for-deployment':
+          statusMessage = 'marked as ready for deployment';
+          break;
+        case 'ready-for-compliance-review':
+          statusMessage = 'marked as ready for compliance review';
+          break;
+        case 'marketing-review-in-progress':
+          statusMessage = 'sent back for marketing review';
+          break;
+        default:
+          statusMessage = 'status updated';
+      }
 
-    showToast(`Project "${website.name}" ${statusMessage}`, 'success');
+      showToast(`Project "${website.name}" ${statusMessage}`, 'success');
 
-    if (thread) {
-      showToast(`New review thread created for "${website.name}"`, 'success');
+      if (thread) {
+        showToast(`New review thread created for "${website.name}"`, 'success');
+      }
+    } catch (error) {
+      showToast('Failed to update status', 'error');
     }
   };
 
@@ -270,8 +268,15 @@ const Index = () => {
 
   const handleCommentsModalClose = () => {
     setIsCommentsModalOpen(false);
-    const updatedWebsites = StorageUtils.updateWebsiteCommentCounts(websites);
-    setWebsites(updatedWebsites);
+  };
+
+  const handleManualSync = async () => {
+    try {
+      await syncData();
+      showToast('Data synchronized successfully', 'success');
+    } catch (error) {
+      showToast('Failed to synchronize data', 'error');
+    }
   };
 
   if (!user) {
@@ -291,6 +296,56 @@ const Index = () => {
         onViewModeChange={setViewMode}
         onCreateClick={() => setIsCreateModalOpen(true)}
       />
+
+      {/* Real-time status bar */}
+      <div className="px-4 py-2 bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              {isConnected ? (
+                <Wifi className="h-4 w-4 text-green-600" />
+              ) : (
+                <WifiOff className="h-4 w-4 text-red-600" />
+              )}
+              <Badge 
+                className={isConnected 
+                  ? "bg-green-100 text-green-800" 
+                  : "bg-red-100 text-red-800"
+                }
+              >
+                {isConnected ? 'Real-time Connected' : 'Offline Mode'}
+              </Badge>
+            </div>
+            
+            {error && (
+              <Badge className="bg-yellow-100 text-yellow-800">
+                {error}
+              </Badge>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleManualSync}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Sync
+            </Button>
+            <Button
+              onClick={() => setIsConfigModalOpen(true)}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Settings className="h-4 w-4" />
+              Backend Config
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <main className="px-4 py-6 lg:px-6">
         {isLoading ? (
@@ -373,6 +428,27 @@ const Index = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleCreateProject}
       />
+
+      {/* Backend Configuration Modal */}
+      {isConfigModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Backend Configuration</h2>
+                <Button
+                  onClick={() => setIsConfigModalOpen(false)}
+                  variant="outline"
+                  size="sm"
+                >
+                  Close
+                </Button>
+              </div>
+              <BackendConfig onConfigChange={loadInitialData} />
+            </div>
+          </div>
+        </div>
+      )}
 
       <Toast
         message={toast.message}
