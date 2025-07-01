@@ -32,9 +32,10 @@ export const useRealTimeData = (options: UseRealTimeDataOptions = {}) => {
     try {
       // Try to load from API first
       const apiData = await apiService.getWebsites();
-      const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(apiData);
+      const websitesData = Array.isArray(apiData) ? apiData as Website[] : [];
+      const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(websitesData);
       setWebsites(websitesWithComments);
-      console.log('Loaded data from API:', apiData.length, 'websites');
+      console.log('Loaded data from API:', websitesData.length, 'websites');
     } catch (apiError) {
       console.warn('Failed to load from API:', apiError);
       
@@ -65,7 +66,8 @@ export const useRealTimeData = (options: UseRealTimeDataOptions = {}) => {
   const syncData = useCallback(async () => {
     try {
       const apiData = await apiService.getWebsites();
-      const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(apiData);
+      const websitesData = Array.isArray(apiData) ? apiData as Website[] : [];
+      const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(websitesData);
       setWebsites(websitesWithComments);
       
       // Also save to localStorage as backup
@@ -79,29 +81,38 @@ export const useRealTimeData = (options: UseRealTimeDataOptions = {}) => {
 
   // WebSocket message handlers
   const handleWebsiteUpdate = useCallback((data: any) => {
-    setWebsites(prev => 
-      prev.map(website => 
-        website.id === data.id ? { ...website, ...data } : website
-      )
-    );
+    if (data && typeof data === 'object' && data.id) {
+      setWebsites(prev => 
+        prev.map(website => 
+          website.id === data.id ? { ...website, ...data } : website
+        )
+      );
+    }
   }, []);
 
-  const handleWebsiteCreate = useCallback((data: Website) => {
-    setWebsites(prev => [data, ...prev]);
+  const handleWebsiteCreate = useCallback((data: any) => {
+    if (data && typeof data === 'object' && data.id) {
+      const newWebsite = data as Website;
+      setWebsites(prev => [newWebsite, ...prev]);
+    }
   }, []);
 
-  const handleWebsiteDelete = useCallback((data: { id: string }) => {
-    setWebsites(prev => prev.filter(website => website.id !== data.id));
+  const handleWebsiteDelete = useCallback((data: any) => {
+    if (data && typeof data === 'object' && data.id) {
+      setWebsites(prev => prev.filter(website => website.id !== data.id));
+    }
   }, []);
 
   const handleCommentUpdate = useCallback((data: any) => {
-    setWebsites(prev => 
-      prev.map(website => 
-        website.id === data.websiteId 
-          ? { ...website, commentCount: data.commentCount }
-          : website
-      )
-    );
+    if (data && typeof data === 'object' && data.websiteId && typeof data.commentCount === 'number') {
+      setWebsites(prev => 
+        prev.map(website => 
+          website.id === data.websiteId 
+            ? { ...website, commentCount: data.commentCount }
+            : website
+        )
+      );
+    }
   }, []);
 
   // Initialize WebSocket connection
@@ -164,7 +175,7 @@ export const useRealTimeData = (options: UseRealTimeDataOptions = {}) => {
   // API methods that also emit WebSocket events
   const createWebsite = useCallback(async (website: Omit<Website, 'id'>) => {
     try {
-      const newWebsite = await apiService.createWebsite(website);
+      const newWebsite = await apiService.createWebsite(website) as Website;
       
       // Optimistically update local state
       setWebsites(prev => [newWebsite, ...prev]);
@@ -184,7 +195,7 @@ export const useRealTimeData = (options: UseRealTimeDataOptions = {}) => {
 
   const updateWebsite = useCallback(async (id: string, updates: Partial<Website>) => {
     try {
-      const updatedWebsite = await apiService.updateWebsite(id, updates);
+      const updatedWebsite = await apiService.updateWebsite(id, updates) as Partial<Website>;
       
       // Optimistically update local state
       setWebsites(prev => 
