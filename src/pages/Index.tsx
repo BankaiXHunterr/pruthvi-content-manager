@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import Header from '../components/Header';
 import FilterBar from '../components/FilterBar';
@@ -124,8 +123,8 @@ const Index = () => {
       return;
     }
 
-    if (website.status !== 'compliance-approved' && website.status !== 'ready-for-deployment') {
-      showToast('Only compliance-approved websites can be downloaded', 'error');
+    if (website.status !== 'compliance-approved' && website.status !== 'ready-for-deployment' && website.status !== 'deployed' && website.status !== 'in-production') {
+      showToast('Only approved websites can be downloaded', 'error');
       return;
     }
 
@@ -201,7 +200,7 @@ const Index = () => {
     showToast('Logged out successfully', 'success');
   };
 
-  const handleDeploy = async (website: Website) => {
+  const handleDeploy = async (website: Website, deployUrl?: string) => {
     if (!user) return;
     
     const permissions = ROLE_PERMISSIONS[user.role];
@@ -216,10 +215,16 @@ const Index = () => {
     }
 
     try {
-      await updateWebsite(website.id, {
+      const updateData: Partial<Website> = {
         status: 'deployed' as WebsiteStatus,
         lastUpdated: new Date().toLocaleDateString('en-GB')
-      });
+      };
+
+      if (deployUrl) {
+        updateData.url = deployUrl;
+      }
+
+      await updateWebsite(website.id, updateData);
       showToast(`Project "${website.name}" deployed successfully`, 'success');
     } catch (error) {
       showToast('Failed to deploy project', 'error');
@@ -235,14 +240,26 @@ const Index = () => {
 
       let statusMessage = '';
       switch (newStatus) {
+        case 'marketing-review-in-progress':
+          statusMessage = thread ? 'sent back for marketing review' : 'moved to marketing review';
+          break;
+        case 'marketing-review-completed':
+          statusMessage = 'marketing review completed';
+          break;
+        case 'ready-for-compliance-review':
+          statusMessage = 'submitted for compliance review';
+          break;
+        case 'compliance-approved':
+          statusMessage = 'approved by compliance';
+          break;
         case 'ready-for-deployment':
           statusMessage = 'marked as ready for deployment';
           break;
-        case 'ready-for-compliance-review':
-          statusMessage = 'marked as ready for compliance review';
+        case 'deployed':
+          statusMessage = 'deployed';
           break;
-        case 'marketing-review-in-progress':
-          statusMessage = 'sent back for marketing review';
+        case 'in-production':
+          statusMessage = 'marked as in production';
           break;
         default:
           statusMessage = 'status updated';

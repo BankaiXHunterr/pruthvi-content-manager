@@ -12,8 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { WebsiteStatus, CommentThread } from '../types/auth';
 import { useAuth } from '../contexts/AuthContext';
-import { ROLE_PERMISSIONS, STATUS_LABELS } from '../types/auth';
+import { ROLE_PERMISSIONS, STATUS_LABELS, getAvailableStatusTransitions } from '../types/auth';
 import ThreadedCommentModal from './ThreadedCommentModal';
+import StatusManagementModal from './StatusManagementModal';
 import { StorageUtils } from '../utils/storage';
 
 export interface Website {
@@ -59,6 +60,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
   const [isUrlSubmissionModalOpen, setIsUrlSubmissionModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [deployUrl, setDeployUrl] = useState('');
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [projectThreads, setProjectThreads] = useState<CommentThread[]>([]);
@@ -96,6 +98,8 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
 
   const getStatusColor = (status: WebsiteStatus) => {
     switch (status) {
+      case 'in-production':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'deployed':
         return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       case 'compliance-approved':
@@ -194,14 +198,15 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   if (!user) return null;
 
   const permissions = ROLE_PERMISSIONS[user.role];
+  const availableTransitions = getAvailableStatusTransitions(user.role, website.status);
   
   // Role-based permission checks
   const canDelete = permissions.canDelete && website.status === 'draft';
   const canEdit = permissions.canEdit;
   const canApprove = permissions.canApprove;
-  const canDownload = permissions.canDownload && (website.status === 'compliance-approved' || website.status === 'deployed');
+  const canDownload = permissions.canDownload && (website.status === 'compliance-approved' || website.status === 'deployed' || website.status === 'in-production');
   const canDeploy = permissions.canDeploy && (website.status === 'compliance-approved' || website.status === 'ready-for-deployment');
-  const canUpdateStatus = permissions.canUpdateStatus;
+  const canUpdateStatus = permissions.canUpdateStatus || availableTransitions.length > 0;
   const canComment = permissions.canComment;
   const canSubmitUrl = user.role === 'website-developer';
 
@@ -240,6 +245,16 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
                       <Badge variant="updated" className="text-xs">
                         Updated
                       </Badge>
+                    )}
+                    {canUpdateStatus && (
+                      <Button
+                        onClick={() => setIsStatusModalOpen(true)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:bg-gray-100"
+                      >
+                        <Settings className="h-3 w-3 text-gray-500" />
+                      </Button>
                     )}
                   </div>
                   <TooltipProvider>
@@ -423,6 +438,13 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
           </DialogContent>
         </Dialog>
 
+        <StatusManagementModal
+          website={website}
+          isOpen={isStatusModalOpen}
+          onClose={() => setIsStatusModalOpen(false)}
+          onStatusUpdate={onStatusUpdate || (() => {})}
+        />
+
         <ThreadedCommentModal
           thread={null}
           isOpen={isCommentsModalOpen}
@@ -465,6 +487,16 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
                 <Badge variant="updated" className="text-xs">
                   Updated
                 </Badge>
+              )}
+              {canUpdateStatus && (
+                <Button
+                  onClick={() => setIsStatusModalOpen(true)}
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 hover:bg-gray-100"
+                >
+                  <Settings className="h-3 w-3 text-gray-500" />
+                </Button>
               )}
             </div>
           </div>
@@ -690,6 +722,13 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      <StatusManagementModal
+        website={website}
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+        onStatusUpdate={onStatusUpdate || (() => {})}
+      />
 
       <ThreadedCommentModal
         thread={null}

@@ -1,7 +1,7 @@
 
 export type UserRole = 'marketing-creator' | 'marketing-reviewer' | 'compliance-reviewer' | 'admin' | 'website-developer';
 
-export type WebsiteStatus = 'draft' | 'marketing-review-completed' | 'compliance-approved' | 'deployed' | 'marketing-review-in-progress' | 'ready-for-compliance-review' | 'ready-for-deployment';
+export type WebsiteStatus = 'draft' | 'marketing-review-in-progress' | 'marketing-review-completed' | 'ready-for-compliance-review' | 'compliance-approved' | 'ready-for-deployment' | 'deployed' | 'in-production';
 
 export type ThreadStatus = 'in-progress' | 'needs-revision' | 'completed';
 
@@ -48,20 +48,20 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canCreate: true,
     canEdit: true,
     canDelete: true,
-    canApprove: false, // Cannot use Approve button
+    canApprove: false,
     canComment: true,
-    canDownload: false, // Cannot use Download button
+    canDownload: false,
     canDeploy: true,
     canManageUsers: false,
     canUpdateStatus: true
   },
   'marketing-reviewer': {
-    canCreate: false, // Cannot use Create button
+    canCreate: false,
     canEdit: true,
-    canDelete: false, // Cannot use Delete button
-    canApprove: false, // Cannot use Approve button
+    canDelete: false,
+    canApprove: false,
     canComment: true,
-    canDownload: false, // Cannot use Download button
+    canDownload: false,
     canDeploy: true,
     canManageUsers: false,
     canUpdateStatus: true
@@ -70,15 +70,15 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canCreate: false,
     canEdit: false,
     canDelete: false,
-    canApprove: true, // Can only see and click Approve
-    canComment: true, // Can only see and click Comment
+    canApprove: true,
+    canComment: true,
     canDownload: false,
     canDeploy: false,
     canManageUsers: false,
     canUpdateStatus: false
   },
   'admin': {
-    canCreate: true, // Full access to all features
+    canCreate: true,
     canEdit: true,
     canDelete: true,
     canApprove: true,
@@ -94,7 +94,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canDelete: false,
     canApprove: false,
     canComment: false,
-    canDownload: true, // Can only see and click Download
+    canDownload: true,
     canDeploy: false,
     canManageUsers: false,
     canUpdateStatus: false
@@ -103,12 +103,13 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
 
 export const STATUS_LABELS: Record<WebsiteStatus, string> = {
   'draft': 'Draft',
-  'marketing-review-completed': 'Marketing Review Completed',
   'marketing-review-in-progress': 'Marketing Review In Progress',
+  'marketing-review-completed': 'Marketing Review Completed',
   'ready-for-compliance-review': 'Ready for Compliance Review',
   'compliance-approved': 'Compliance Approved',
   'ready-for-deployment': 'Ready for Deployment',
-  'deployed': 'Deployed'
+  'deployed': 'Deployed',
+  'in-production': 'In Production'
 };
 
 export const ROLE_LABELS: Record<UserRole, string> = {
@@ -124,3 +125,69 @@ export const THREAD_STATUS_LABELS: Record<ThreadStatus, string> = {
   'needs-revision': 'Needs Revision',
   'completed': 'Completed'
 };
+
+// Status transition rules - defines what statuses each role can transition TO
+export const STATUS_TRANSITIONS: Record<UserRole, Record<WebsiteStatus, WebsiteStatus[]>> = {
+  'marketing-creator': {
+    'draft': ['marketing-review-in-progress'],
+    'marketing-review-in-progress': [], // Cannot change once in review
+    'marketing-review-completed': [], // Cannot change
+    'ready-for-compliance-review': [], // Cannot change
+    'compliance-approved': ['ready-for-deployment'],
+    'ready-for-deployment': ['deployed'],
+    'deployed': ['in-production'],
+    'in-production': []
+  },
+  'marketing-reviewer': {
+    'draft': [],
+    'marketing-review-in-progress': ['marketing-review-completed'],
+    'marketing-review-completed': ['ready-for-compliance-review'],
+    'ready-for-compliance-review': [], // Cannot change
+    'compliance-approved': ['ready-for-deployment'],
+    'ready-for-deployment': ['deployed'],
+    'deployed': ['in-production'],
+    'in-production': []
+  },
+  'compliance-reviewer': {
+    'draft': [],
+    'marketing-review-in-progress': [],
+    'marketing-review-completed': [],
+    'ready-for-compliance-review': ['compliance-approved', 'marketing-review-in-progress'], // Can approve or send back
+    'compliance-approved': [],
+    'ready-for-deployment': [],
+    'deployed': [],
+    'in-production': []
+  },
+  'admin': {
+    'draft': ['marketing-review-in-progress'],
+    'marketing-review-in-progress': ['marketing-review-completed'],
+    'marketing-review-completed': ['ready-for-compliance-review'],
+    'ready-for-compliance-review': ['compliance-approved', 'marketing-review-in-progress'],
+    'compliance-approved': ['ready-for-deployment'],
+    'ready-for-deployment': ['deployed'],
+    'deployed': ['in-production'],
+    'in-production': []
+  },
+  'website-developer': {
+    'draft': [],
+    'marketing-review-in-progress': [],
+    'marketing-review-completed': [],
+    'ready-for-compliance-review': [],
+    'compliance-approved': [],
+    'ready-for-deployment': [],
+    'deployed': [],
+    'in-production': []
+  }
+};
+
+// Helper function to get available status transitions for a user and current status
+export const getAvailableStatusTransitions = (userRole: UserRole, currentStatus: WebsiteStatus): WebsiteStatus[] => {
+  return STATUS_TRANSITIONS[userRole][currentStatus] || [];
+};
+
+// Helper function to check if a status transition is valid
+export const isValidStatusTransition = (userRole: UserRole, fromStatus: WebsiteStatus, toStatus: WebsiteStatus): boolean => {
+  const availableTransitions = getAvailableStatusTransitions(userRole, fromStatus);
+  return availableTransitions.includes(toStatus);
+};
+
