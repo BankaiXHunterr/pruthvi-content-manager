@@ -6,78 +6,66 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  switchRole: (role: UserRole) => void;
-  isAuthenticated: boolean;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demonstration - in real app, roles would be determined by backend
-const MOCK_USERS: User[] = [
-  {
+// Mock users for demonstration
+const mockUsers: Record<string, User> = {
+  'creator@icici.com': {
     id: '1',
-    name: 'Sarah Creator',
-    email: 'sarah@company.com',
+    name: 'Alice Johnson',
+    email: 'creator@icici.com',
     role: 'marketing-creator'
   },
-  {
+  'reviewer@icici.com': {
     id: '2',
-    name: 'John Reviewer',
-    email: 'john@company.com',
+    name: 'Bob Smith',
+    email: 'reviewer@icici.com',
     role: 'marketing-reviewer'
   },
-  {
+  'compliance@icici.com': {
     id: '3',
-    name: 'Lisa Compliance',
-    email: 'lisa@company.com',
+    name: 'Carol Davis',
+    email: 'compliance@icici.com',
     role: 'compliance-reviewer'
   },
-  {
+  'admin@icici.com': {
     id: '4',
-    name: 'Alex Admin',
-    email: 'alex@company.com',
+    name: 'David Wilson',
+    email: 'admin@icici.com',
     role: 'admin'
   },
-  {
+  'developer@icici.com': {
     id: '5',
-    name: 'Mike Developer',
-    email: 'mike@company.com',
+    name: 'Emma Rodriguez',
+    email: 'developer@icici.com',
     role: 'website-developer'
   }
-];
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for saved user session
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    // Check if user is stored in localStorage
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
     setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock authentication - in real app, this would call backend API
-    // Backend would return user role based on email
-    const foundUser = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
-    
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('currentUser', JSON.stringify(foundUser));
-      setIsLoading(false);
+    // Simple authentication logic
+    const user = mockUsers[email.toLowerCase()];
+    if (user) {
+      setUser(user);
+      localStorage.setItem('currentUser', JSON.stringify(user));
       return true;
     }
-    
-    setIsLoading(false);
     return false;
   };
 
@@ -86,23 +74,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('currentUser');
   };
 
-  const switchRole = (role: UserRole) => {
-    if (user) {
-      const updatedUser = { ...user, role };
-      setUser(updatedUser);
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      logout,
-      switchRole,
-      isAuthenticated: !!user,
-      isLoading
-    }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -153,13 +153,12 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
 
   const handleUrlSubmissionConfirm = () => {
     if (submissionUrl.trim()) {
-      // Mark website as updated
+      // Mark website as updated and save the URL
       const updatedWebsite = { ...website, isUpdated: true, url: submissionUrl };
-      // In a real app, this would trigger a callback to update the website
       console.log('Website marked as updated:', updatedWebsite);
       setIsUrlSubmissionModalOpen(false);
       setSubmissionUrl('');
-      // Force re-render by updating parent component if possible
+      // Trigger callback to update parent component
       if (onStatusUpdate) {
         onStatusUpdate(updatedWebsite, website.status);
       }
@@ -196,7 +195,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
 
   const permissions = ROLE_PERMISSIONS[user.role];
   
-  // Role-based permission checks based on exact specifications
+  // Role-based permission checks
   const canDelete = permissions.canDelete && website.status === 'draft';
   const canEdit = permissions.canEdit;
   const canApprove = permissions.canApprove;

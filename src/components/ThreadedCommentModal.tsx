@@ -36,11 +36,16 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
   const [selectedThread, setSelectedThread] = useState<CommentThread | null>(thread);
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
   const [showThreadSettings, setShowThreadSettings] = useState<string | null>(null);
+  const [localProjectThreads, setLocalProjectThreads] = useState<CommentThread[]>(projectThreads);
   const { user } = useAuth();
 
   useEffect(() => {
     setSelectedThread(thread);
   }, [thread]);
+
+  useEffect(() => {
+    setLocalProjectThreads(projectThreads);
+  }, [projectThreads]);
 
   if (!user) return null;
 
@@ -86,6 +91,11 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
       comments: [...threadToUpdate.comments, comment]
     };
 
+    // Update local state immediately
+    setLocalProjectThreads(prev => 
+      prev.map(t => t.id === updatedThread.id ? updatedThread : t)
+    );
+
     onUpdateThread(updatedThread);
     if (selectedThread?.id === threadToUpdate.id) {
       setSelectedThread(updatedThread);
@@ -96,16 +106,17 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
   const handleCreateThread = () => {
     if (!newThreadTitle.trim() || !newComment.trim() || !website) return;
 
+    const threadId = Date.now().toString();
     const newThread: CommentThread = {
-      id: Date.now().toString(),
+      id: threadId,
       projectId: website.id,
       title: newThreadTitle,
-      status: 'needs-revision',
+      status: 'needs-revision', // Start with "Needs Revision" status
       createdBy: user.name,
       createdAt: new Date().toISOString(),
       comments: [{
         id: (Date.now() + 1).toString(),
-        threadId: Date.now().toString(),
+        threadId: threadId,
         content: newComment,
         author: user.name,
         authorRole: user.role,
@@ -113,6 +124,9 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
       }]
     };
 
+    // Update local state immediately to fix the bug where new threads don't appear
+    setLocalProjectThreads(prev => [...prev, newThread]);
+    
     onUpdateThread(newThread);
     setNewThreadTitle('');
     setNewComment('');
@@ -124,6 +138,11 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
       ...threadToUpdate,
       status: newStatus
     };
+
+    // Update local state immediately
+    setLocalProjectThreads(prev => 
+      prev.map(t => t.id === updatedThread.id ? updatedThread : t)
+    );
 
     onUpdateThread(updatedThread);
     if (selectedThread?.id === threadToUpdate.id) {
@@ -142,7 +161,7 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
     });
   };
 
-  // Check permissions
+  // Check permissions - Only compliance-reviewer can create threads
   const canCreateThreads = user.role === 'compliance-reviewer';
   const canManageThreadStatus = user.role === 'compliance-reviewer';
 
@@ -172,7 +191,7 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
                 )}
               </div>
 
-              {/* New Thread Form */}
+              {/* New Thread Form - Only visible to compliance-reviewer */}
               {showNewThreadForm && canCreateThreads && (
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                   <div className="space-y-3">
@@ -200,9 +219,9 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
               )}
 
               {/* Thread List with Expandable Comments */}
-              {projectThreads.length > 0 && (
+              {localProjectThreads.length > 0 && (
                 <div className="space-y-3 mb-4">
-                  {projectThreads.map((thread) => (
+                  {localProjectThreads.map((thread) => (
                     <div
                       key={thread.id}
                       className="border border-gray-200 rounded-lg overflow-hidden"
@@ -245,7 +264,7 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
                           </div>
                         </div>
 
-                        {/* Thread Settings */}
+                        {/* Thread Settings - Only visible to compliance-reviewer */}
                         {showThreadSettings === thread.id && canManageThreadStatus && (
                           <div className="mb-3 p-3 bg-gray-50 rounded border">
                             <p className="text-sm font-medium mb-2">Change Thread Status:</p>
@@ -322,8 +341,8 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
                               ))}
                             </div>
 
-                            {/* Reply Section - Only if thread is not completed */}
-                            {thread.status !== 'completed' && (
+                            {/* Reply Section - Disabled if thread is completed */}
+                            {thread.status !== 'completed' ? (
                               <>
                                 <div className="mb-3">
                                   <Textarea
@@ -354,12 +373,12 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
                                   </Button>
                                 </div>
                               </>
-                            )}
-
-                            {/* Show message when thread is completed */}
-                            {thread.status === 'completed' && (
-                              <div className="text-center py-3 text-gray-500 text-sm">
-                                This thread has been marked as completed. No further comments can be added.
+                            ) : (
+                              <div className="text-center py-3 text-gray-500 text-sm bg-gray-100 rounded">
+                                <div className="flex items-center justify-center gap-2">
+                                  <Badge className="bg-green-100 text-green-800">Completed</Badge>
+                                  <span>This thread has been marked as completed. No further comments can be added.</span>
+                                </div>
                               </div>
                             )}
                           </div>
@@ -370,7 +389,7 @@ const ThreadedCommentModal: React.FC<ThreadedCommentModalProps> = ({
                 </div>
               )}
 
-              {projectThreads.length === 0 && (
+              {localProjectThreads.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <MessageSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                   <p>No discussion threads yet.</p>
