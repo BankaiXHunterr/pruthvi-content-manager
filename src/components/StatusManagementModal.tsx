@@ -27,11 +27,15 @@ const StatusManagementModal: React.FC<StatusManagementModalProps> = ({
   const [selectedStatus, setSelectedStatus] = useState<WebsiteStatus | null>(null);
   const { user } = useAuth();
 
+  console.log('StatusManagementModal rendered:', { website: website?.name, isOpen, user: user?.role });
+
   if (!website || !user) return null;
 
   const availableTransitions = getAvailableStatusTransitions(user.role, website.status);
+  console.log('Available transitions:', availableTransitions);
 
   const handleStatusUpdate = (newStatus: WebsiteStatus) => {
+    console.log('Status update requested:', newStatus);
     if (newStatus === 'marketing-review-in-progress' && user.role === 'compliance-reviewer') {
       // This is a revision request, show the form
       setSelectedStatus(newStatus);
@@ -231,4 +235,3 @@ const StatusManagementModal: React.FC<StatusManagementModalProps> = ({
 };
 
 export default StatusManagementModal;
-
