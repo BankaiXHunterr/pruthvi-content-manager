@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ROLE_PERMISSIONS, STATUS_LABELS, getAvailableStatusTransitions } from '../types/auth';
 import ThreadedCommentModal from './ThreadedCommentModal';
 import StatusManagementModal from './StatusManagementModal';
+import WebsiteBuilderModal from './WebsiteBuilderModal';
 import { StorageUtils } from '../utils/storage';
 
 export interface Website {
@@ -57,6 +58,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [thumbnailLoading, setThumbnailLoading] = useState(true);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isWebsiteBuilderModalOpen, setIsWebsiteBuilderModalOpen] = useState(false);
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
   const [isUrlSubmissionModalOpen, setIsUrlSubmissionModalOpen] = useState(false);
@@ -118,7 +120,11 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   };
 
   const handleEditClick = () => {
-    setIsPreviewModalOpen(true);
+    if (user?.role === 'marketing-reviewer') {
+      setIsWebsiteBuilderModalOpen(true);
+    } else {
+      setIsPreviewModalOpen(true);
+    }
   };
 
   const handleDeleteClick = () => {
@@ -193,6 +199,12 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
     if (website.url) {
       window.open(website.url, '_blank');
     }
+  };
+
+  const handleWebsiteBuilderSave = (updatedWebsite: Website, websiteData: any) => {
+    console.log('Website builder save:', updatedWebsite, websiteData);
+    // Call the parent onEdit callback with the updated website
+    onEdit(updatedWebsite);
   };
 
   if (!user) return null;
@@ -738,6 +750,13 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
         website={website}
         projectThreads={projectThreads}
         onViewComments={onViewComments}
+      />
+
+      <WebsiteBuilderModal
+        website={website}
+        isOpen={isWebsiteBuilderModalOpen}
+        onClose={() => setIsWebsiteBuilderModalOpen(false)}
+        onSave={handleWebsiteBuilderSave}
       />
     </>
   );
