@@ -4,6 +4,7 @@ import { User, UserRole } from '../types/auth';
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string, role: UserRole) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -105,6 +106,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false;
   };
 
+  const register = async (name: string, email: string, password: string, role: UserRole): Promise<boolean> => {
+    console.log('Registration attempt for:', email, 'with role:', role);
+    
+    // Check if user already exists
+    const existingUser = mockUsers[email.toLowerCase()];
+    if (existingUser) {
+      console.log('Registration failed - user already exists');
+      return false;
+    }
+
+    // Create new user
+    const newUser: User = {
+      id: Date.now().toString(),
+      name,
+      email: email.toLowerCase(),
+      role
+    };
+
+    // Add to mock users (in real app, this would be saved to database)
+    mockUsers[email.toLowerCase()] = newUser;
+    
+    // Log them in automatically
+    setUser(newUser);
+    localStorage.setItem('currentUser', JSON.stringify(newUser));
+    console.log('Registration successful for:', newUser.name, 'Role:', newUser.role);
+    return true;
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('currentUser');
@@ -124,6 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{ 
       user, 
       login, 
+      register,
       logout, 
       isLoading, 
       isAuthenticated, 

@@ -8,21 +8,28 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginForm from "./components/LoginForm";
+import RegisterForm from "./components/RegisterForm";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const { isAuthenticated } = useAuth();
 
-  if (!isAuthenticated) {
-    return <LoginForm />;
-  }
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="*" element={<NotFound />} />
+        {!isAuthenticated ? (
+          <>
+            <Route path="/" element={<LoginForm />} />
+            <Route path="/register" element={<RegisterForm />} />
+            <Route path="*" element={<LoginForm />} />
+          </>
+        ) : (
+          <>
+            <Route path="/" element={<Index />} />
+            <Route path="*" element={<NotFound />} />
+          </>
+        )}
       </Routes>
     </BrowserRouter>
   );
