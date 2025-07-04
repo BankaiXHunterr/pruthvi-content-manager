@@ -314,55 +314,57 @@ const Index = () => {
         onCreateClick={() => setIsCreateModalOpen(true)}
       />
 
-      {/* Real-time status bar */}
-      <div className="px-4 py-2 bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              {isConnected ? (
-                <Wifi className="h-4 w-4 text-green-600" />
-              ) : (
-                <WifiOff className="h-4 w-4 text-red-600" />
+      {/* Real-time status bar - only shown in development */}
+      {!import.meta.env.PROD && (
+        <div className="px-4 py-2 bg-white border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                {isConnected ? (
+                  <Wifi className="h-4 w-4 text-green-600" />
+                ) : (
+                  <WifiOff className="h-4 w-4 text-red-600" />
+                )}
+                <Badge 
+                  className={isConnected 
+                    ? "bg-green-100 text-green-800" 
+                    : "bg-red-100 text-red-800"
+                  }
+                >
+                  {isConnected ? 'Real-time Connected' : 'Offline Mode'}
+                </Badge>
+              </div>
+              
+              {error && (
+                <Badge className="bg-yellow-100 text-yellow-800">
+                  {error}
+                </Badge>
               )}
-              <Badge 
-                className={isConnected 
-                  ? "bg-green-100 text-green-800" 
-                  : "bg-red-100 text-red-800"
-                }
-              >
-                {isConnected ? 'Real-time Connected' : 'Offline Mode'}
-              </Badge>
             </div>
-            
-            {error && (
-              <Badge className="bg-yellow-100 text-yellow-800">
-                {error}
-              </Badge>
-            )}
-          </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={handleManualSync}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Sync
-            </Button>
-            <Button
-              onClick={() => setIsConfigModalOpen(true)}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              Backend Config
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleManualSync}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Sync
+              </Button>
+              <Button
+                onClick={() => setIsConfigModalOpen(true)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Backend Config
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <main className="px-4 py-6 lg:px-6">
         {isLoading ? (
