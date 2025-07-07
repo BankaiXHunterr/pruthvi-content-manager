@@ -145,7 +145,7 @@ const Index = () => {
     showToast(`Downloaded compliance package for ${website.name}`, 'success');
   };
 
-  const handleSave = async (website: Website, newContent: string) => {
+  const handleSave = async (website: Website, updatedData: Record<string, any>) => {
     if (!user) return;
 
     const permissions = ROLE_PERMISSIONS[user.role];
@@ -163,13 +163,13 @@ const Index = () => {
 
     try {
       await updateWebsite(website.id, {
-        content: newContent,
+        ...updatedData,
         status: newStatus,
         lastUpdated: new Date().toLocaleDateString('en-GB')
       });
-      showToast(`Content updated successfully for ${website.name}`, 'success');
+      showToast(`Website updated successfully for ${website.name}`, 'success');
     } catch (error) {
-      showToast('Failed to update content', 'error');
+      showToast('Failed to update website', 'error');
     }
   };
 
