@@ -30,32 +30,39 @@ export const useRealTimeData = (options: UseRealTimeDataOptions = {}) => {
     setError(null);
 
     try {
-      // Try to load from API first
+      console.log('Attempting to load data from API...');
+      // Always try API first
       const apiData = await apiService.getWebsites();
       const websitesData = Array.isArray(apiData) ? apiData as Website[] : [];
       const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(websitesData);
       setWebsites(websitesWithComments);
-      console.log('Loaded data from API:', websitesData.length, 'websites');
+      
+      // Save to localStorage as backup when API succeeds
+      if (fallbackToStorage) {
+        StorageUtils.saveWebsites(websitesWithComments);
+      }
+      
+      console.log('Successfully loaded data from API:', websitesData.length, 'websites');
     } catch (apiError) {
-      console.warn('Failed to load from API:', apiError);
+      console.warn('API request failed, attempting fallback to storage:', apiError);
       
       if (fallbackToStorage) {
-        // Fallback to localStorage
+        // Fallback to localStorage only if API fails
         const savedWebsites = StorageUtils.loadWebsites();
         if (savedWebsites.length > 0) {
           const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(savedWebsites);
           setWebsites(websitesWithComments);
-          console.log('Loaded data from storage:', savedWebsites.length, 'websites');
+          console.log('Loaded data from storage fallback:', savedWebsites.length, 'websites');
         } else {
           // Use mock data as last resort
           const { mockWebsites } = await import('../data/mockData');
           const websitesWithComments = StorageUtils.updateWebsiteCommentCounts(mockWebsites);
           setWebsites(websitesWithComments);
           StorageUtils.saveWebsites(websitesWithComments);
-          console.log('Loaded mock data:', mockWebsites.length, 'websites');
+          console.log('Loaded mock data as final fallback:', mockWebsites.length, 'websites');
         }
       } else {
-        setError('Failed to load data from API');
+        setError('Failed to load data: API unavailable and storage fallback disabled');
       }
     } finally {
       setIsLoading(false);
@@ -82,26 +89,55 @@ export const useRealTimeData = (options: UseRealTimeDataOptions = {}) => {
   // WebSocket message handlers
   const handleWebsiteUpdate = useCallback((data: any) => {
     if (data && typeof data === 'object' && data.id) {
+      // Update frontend state
       setWebsites(prev => 
         prev.map(website => 
           website.id === data.id ? { ...website, ...data } : website
         )
       );
+      
+      // Also update localStorage immediately
+      if (fallbackToStorage) {
+        const currentWebsites = StorageUtils.loadWebsites();
+        const updatedWebsites = currentWebsites.map(website => 
+          website.id === data.id ? { ...website, ...data } : website
+        );
+        StorageUtils.saveWebsites(updatedWebsites);
+        console.log('Updated website in localStorage via WebSocket:', data.id);
+      }
     }
-  }, []);
+  }, [fallbackToStorage]);
 
   const handleWebsiteCreate = useCallback((data: any) => {
     if (data && typeof data === 'object' && data.id) {
       const newWebsite = data as Website;
+      // Update frontend state
       setWebsites(prev => [newWebsite, ...prev]);
+      
+      // Also add to localStorage immediately
+      if (fallbackToStorage) {
+        const currentWebsites = StorageUtils.loadWebsites();
+        const updatedWebsites = [newWebsite, ...currentWebsites];
+        StorageUtils.saveWebsites(updatedWebsites);
+        console.log('Added new website to localStorage via WebSocket:', data.id);
+      }
     }
-  }, []);
+  }, [fallbackToStorage]);
 
   const handleWebsiteDelete = useCallback((data: any) => {
     if (data && typeof data === 'object' && data.id) {
+      // Update frontend state
       setWebsites(prev => prev.filter(website => website.id !== data.id));
+      
+      // Also remove from localStorage immediately
+      if (fallbackToStorage) {
+        const currentWebsites = StorageUtils.loadWebsites();
+        const updatedWebsites = currentWebsites.filter(website => website.id !== data.id);
+        StorageUtils.saveWebsites(updatedWebsites);
+        console.log('Deleted website from localStorage via WebSocket:', data.id);
+      }
     }
-  }, []);
+  }, [fallbackToStorage]);
 
   const handleCommentUpdate = useCallback((data: any) => {
     if (data && typeof data === 'object' && data.websiteId && typeof data.commentCount === 'number') {

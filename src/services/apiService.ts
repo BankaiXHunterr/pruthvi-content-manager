@@ -113,9 +113,11 @@ class ApiService {
    * Use Case: Marketing creator adds new website project
    */
   async createWebsite(website: any) {
+    // Ensure no ID is sent to backend - backend generates IDs
+    const { id, ...websiteData } = website;
     return this.fetchApi('/websites', {
       method: 'POST',
-      body: JSON.stringify(website),
+      body: JSON.stringify(websiteData),
     });
   }
 
@@ -196,7 +198,7 @@ class ApiService {
    * 
    * Input: 
    * - websiteId (string) - Website project ID
-   * - comment (object) - Comment data
+   * - comment (object) - Comment data without ID
    * 
    * Request Body Format: {
    *   content: string (required) - Comment text
@@ -211,10 +213,12 @@ class ApiService {
    * Use Case: Users add feedback/comments on projects
    * Workflow: Triggers status updates and notifications
    */
-  async createComment(websiteId: string, comment: any) {
+  async createComment(websiteId: string, comment: { content: string; author: string; authorRole: string; parentId?: string }) {
+    // Ensure no ID is sent to backend
+    const { id, ...commentData } = comment as any;
     return this.fetchApi(`/websites/${websiteId}/comments`, {
       method: 'POST',
-      body: JSON.stringify(comment),
+      body: JSON.stringify(commentData),
     });
   }
 
@@ -265,9 +269,11 @@ class ApiService {
    * Trigger: Often created during compliance review process
    */
   async createThread(websiteId: string, thread: any) {
+    // Ensure no ID is sent to backend - backend generates IDs
+    const { id, ...threadData } = thread;
     return this.fetchApi(`/websites/${websiteId}/threads`, {
       method: 'POST',
-      body: JSON.stringify(thread),
+      body: JSON.stringify(threadData),
     });
   }
 

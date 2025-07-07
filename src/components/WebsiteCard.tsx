@@ -30,6 +30,10 @@ export interface Website {
   commentCount?: number;
   thumbailUrl?: string;
   isUpdated?: boolean;
+  template?: 'template-1' | 'template-2';
+  fundName?: string;
+  pageTheme?: string;
+  fundDescription?: string;
 }
 
 interface WebsiteCardProps {

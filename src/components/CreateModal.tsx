@@ -23,6 +23,10 @@ interface TeamMember {
 const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSave }) => {
   const [projectName, setProjectName] = useState('');
   const [description, setDescription] = useState('');
+  const [template, setTemplate] = useState<'template-1' | 'template-2'>('template-1');
+  const [fundName, setFundName] = useState('');
+  const [pageTheme, setPageTheme] = useState('');
+  const [fundDescription, setFundDescription] = useState('');
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberRole, setNewMemberRole] = useState<'editor' | 'viewer' | 'admin'>('viewer');
@@ -84,7 +88,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSave }) =>
   };
 
   const handleSubmit = () => {
-    if (projectName.trim()) {
+    if (projectName.trim() && fundName.trim()) {
       const newWebsite: Omit<Website, 'id'> = {
         name: projectName,
         description: description,
@@ -92,7 +96,12 @@ const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSave }) =>
         status: 'draft',
         lastUpdated: new Date().toLocaleDateString('en-GB'),
         category: 'New Project',
-        url: uploadedImage || undefined
+        url: uploadedImage || undefined,
+        // Include new fields in website data
+        template,
+        fundName,
+        pageTheme,
+        fundDescription
       };
       
       onSave(newWebsite);
@@ -100,6 +109,10 @@ const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSave }) =>
       // Reset form
       setProjectName('');
       setDescription('');
+      setTemplate('template-1');
+      setFundName('');
+      setPageTheme('');
+      setFundDescription('');
       setTeamMembers([]);
       setUploadedImage(null);
       onClose();
@@ -136,6 +149,57 @@ const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSave }) =>
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter a brief description"
+              rows={3}
+              className="border-gray-300 focus:border-icici-orange focus:ring-icici-orange"
+            />
+          </div>
+
+          {/* Template Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="template">Template Selection *</Label>
+            <Select value={template} onValueChange={(value: 'template-1' | 'template-2') => setTemplate(value)}>
+              <SelectTrigger className="border-gray-300 focus:border-icici-orange">
+                <SelectValue placeholder="Select template" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem value="template-1">Template 1</SelectItem>
+                <SelectItem value="template-2">Template 2</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Fund Name */}
+          <div className="space-y-2">
+            <Label htmlFor="fundName">Fund Name *</Label>
+            <Input
+              id="fundName"
+              value={fundName}
+              onChange={(e) => setFundName(e.target.value)}
+              placeholder="Enter fund name"
+              className="border-gray-300 focus:border-icici-orange focus:ring-icici-orange"
+            />
+          </div>
+
+          {/* Page Theme */}
+          <div className="space-y-2">
+            <Label htmlFor="pageTheme">Page Theme</Label>
+            <Input
+              id="pageTheme"
+              value={pageTheme}
+              onChange={(e) => setPageTheme(e.target.value)}
+              placeholder="Enter page theme"
+              className="border-gray-300 focus:border-icici-orange focus:ring-icici-orange"
+            />
+          </div>
+
+          {/* Fund Description */}
+          <div className="space-y-2">
+            <Label htmlFor="fundDescription">Fund Description</Label>
+            <Textarea
+              id="fundDescription"
+              value={fundDescription}
+              onChange={(e) => setFundDescription(e.target.value)}
+              placeholder="Enter fund description"
               rows={3}
               className="border-gray-300 focus:border-icici-orange focus:ring-icici-orange"
             />
@@ -248,7 +312,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSave }) =>
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!projectName.trim()}
+            disabled={!projectName.trim() || !fundName.trim()}
             className="px-6 py-2 bg-icici-orange hover:bg-icici-red text-white font-semibold"
           >
             Create Project
