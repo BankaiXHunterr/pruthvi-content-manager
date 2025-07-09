@@ -16,6 +16,7 @@ import { ROLE_PERMISSIONS, STATUS_LABELS, getAvailableStatusTransitions } from '
 import ThreadedCommentModal from './ThreadedCommentModal';
 import StatusManagementModal from './StatusManagementModal';
 import WebsiteBuilderModal from './WebsiteBuilderModal';
+import EditDashboard from './EditDashboard';
 import { StorageUtils } from '../utils/storage';
 
 export interface Website {
@@ -63,6 +64,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   const [thumbnailLoading, setThumbnailLoading] = useState(true);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isWebsiteBuilderModalOpen, setIsWebsiteBuilderModalOpen] = useState(false);
+  const [isDashboardModalOpen, setIsDashboardModalOpen] = useState(false);
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
   const [isUrlSubmissionModalOpen, setIsUrlSubmissionModalOpen] = useState(false);
@@ -124,11 +126,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   };
 
   const handleEditClick = () => {
-    if (user?.role === 'marketing-reviewer') {
-      setIsWebsiteBuilderModalOpen(true);
-    } else {
-      setIsPreviewModalOpen(true);
-    }
+    setIsDashboardModalOpen(true);
   };
 
   const handleDeleteClick = () => {
@@ -470,6 +468,13 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
           projectThreads={projectThreads}
           onViewComments={onViewComments}
         />
+
+        <EditDashboard
+          website={website}
+          isOpen={isDashboardModalOpen}
+          onClose={() => setIsDashboardModalOpen(false)}
+          onSave={onEdit}
+        />
       </>
     );
   }
@@ -761,6 +766,13 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
         isOpen={isWebsiteBuilderModalOpen}
         onClose={() => setIsWebsiteBuilderModalOpen(false)}
         onSave={handleWebsiteBuilderSave}
+      />
+
+      <EditDashboard
+        website={website}
+        isOpen={isDashboardModalOpen}
+        onClose={() => setIsDashboardModalOpen(false)}
+        onSave={onEdit}
       />
     </>
   );
