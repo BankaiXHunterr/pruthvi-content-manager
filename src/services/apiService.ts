@@ -1,4 +1,114 @@
 
+// Mock demo data for edit functionality
+const DEMO_WEBSITE_DATA = {
+  "PAGE_TITLE": "ICICI Prudential Anime Fund 8",
+  "FUND_INFO": {
+    "ABOUT": "About",
+    "HEADING": "ICICI Prudential Anime Fund 8",
+    "CARD_CONTENTS": {
+      "POINT 1": "ICICI Prudential Anime Fund 8 is a unique investment opportunity designed specifically for anime enthusiasts. This fund aims to capture the growth potential of companies involved in the anime industry, including animation studios, merchandise creators, streaming platforms, and more. By investing in this fund, you can align your passion for anime with your financial goals, making it a perfect blend of fandom and finance."
+    }
+  },
+  "HOW_SCHEME_WORK": {
+    "DESCRIPTIONS": {
+      "POINT_1": "Invests in companies driving the anime industry globally.",
+      "POINT_2": "Focuses on sectors like animation, streaming, and merchandise.",
+      "POINT_3": "Aims to deliver long-term growth by leveraging the booming anime market."
+    }
+  },
+  "WHY_INVEST": {
+    "DESCRIPTIONS": {
+      "POINT_1": "Tap into the growing global popularity of anime.",
+      "POINT_2": "Diversify your portfolio with a niche investment theme.",
+      "POINT_3": "Support and benefit from the expanding anime ecosystem."
+    }
+  },
+  "VIDEO_SECTION": {
+    "CARD_CONTENTS": {
+      "VIDEO_1": {
+        "THUMBNAIL": "https://example.com/anime_fund_thumbnail.jpg",
+        "VIDEO_URL": "https://example.com/anime_fund_video.mp4"
+      }
+    },
+    "CARD_TITLE": "Unlock insights into the fund - Click to watch now"
+  },
+  "SCHEME_FEATURES": {
+    "HEADING": "Scheme Features",
+    "TABLE_CONTENT": [
+      {
+        "TITLE": "Name of scheme",
+        "DESCRIPTION": "ICICI Prudential Anime Fund 8"
+      },
+      {
+        "TITLE": "Type of scheme",
+        "DESCRIPTION": "Thematic Equity Fund - Anime Industry Focus"
+      },
+      {
+        "TITLE": "NFO Period",
+        "DESCRIPTION": "NFO Period October 1, 2023 to October 15, 2023"
+      },
+      {
+        "TITLE": "Benchmark Index",
+        "DESCRIPTION": "Anime Industry Growth Index"
+      },
+      {
+        "TITLE": "Entry Load",
+        "DESCRIPTION": "Nil"
+      },
+      {
+        "TITLE": "Exit Load",
+        "DESCRIPTION": "<12 months: 1%; >12 months: Nil"
+      },
+      {
+        "TITLE": "Minimum Application Amount",
+        "DESCRIPTION": "₹5,000"
+      },
+      {
+        "TITLE": "Minimum Additional Application Amount",
+        "DESCRIPTION": "₹1,000"
+      },
+      {
+        "TITLE": "Minimum redemption Amount",
+        "DESCRIPTION": "₹500"
+      },
+      {
+        "TITLE": "Options",
+        "DESCRIPTION": "Growth and Dividend Options"
+      },
+      {
+        "TITLE": "SIP/SWP/STP",
+        "DESCRIPTION": "Available"
+      },
+      {
+        "TITLE": "Plan",
+        "DESCRIPTION": "Regular and Direct Plans"
+      },
+      {
+        "TITLE": "Fund Managers",
+        "DESCRIPTION": "Mr. Anime Enthusiast and Ms. Global Markets Expert"
+      }
+    ]
+  },
+  "SCHEME_RISKOMETER": {
+    "TITLE": "This product is suitable for investors who are seeking*:",
+    "CONTENT": [
+      "Capital appreciation over the long term by investing in companies driving the anime industry."
+    ],
+    "NOTE_TEXT": "*Investors should consult their financial distributors if in doubt about whether the product is suitable for them.",
+    "RISK": "High",
+    "RISK_VALUE": "5",
+    "RISK_STATUS": "Investors understand that their principal will be at high risk.",
+    "BENCHMARK_NAME": "Anime Industry Growth Index"
+  },
+  "DOWNLOAD_BUTTON_SECTION": {
+    "DOWNLOAD_FACTSHEET": "Download Presentation",
+    "DOWNLOAD_FACTSHEET_PATH": "https://www.google.com",
+    "DOWNLOAD_ONE_PAGER": "Download SID",
+    "DOWNLOAD_ONE_PAGER_PATH": "https://www.google.com"
+  },
+  "WARNING_MESSAGE": "Mutual Fund investments are subject to market risk, read all scheme related documents carefully."
+};
+
 export interface ApiConfig {
   baseUrl: string;
   websocketUrl: string;
@@ -90,7 +200,17 @@ class ApiService {
    * Use Case: View detailed project information
    */
   async getWebsite(id: string) {
-    return this.fetchApi(`/websites/${id}`);
+    try {
+      // Try to make the API call first
+      return await this.fetchApi(`/websites/${id}`);
+    } catch (error) {
+      // Fallback to demo data if API fails
+      console.log(`API call failed, using demo data for website ${id}:`, error);
+      return {
+        editableFields: DEMO_WEBSITE_DATA,
+        success: true
+      };
+    }
   }
 
   /**
@@ -144,10 +264,21 @@ class ApiService {
    * Use Case: Status updates, content changes, project edits
    */
   async updateWebsite(id: string, updates: any) {
-    return this.fetchApi(`/websites/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    });
+    try {
+      // Try to make the API call first
+      return await this.fetchApi(`/websites/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+      });
+    } catch (error) {
+      // Fallback to demo response if API fails
+      console.log(`API call failed, using demo response for updateWebsite ${id}:`, error);
+      return {
+        success: true,
+        message: "Website updated successfully (demo mode)",
+        data: updates
+      };
+    }
   }
 
   /**

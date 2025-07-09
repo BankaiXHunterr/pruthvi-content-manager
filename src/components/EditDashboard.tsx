@@ -43,52 +43,7 @@ const EditDashboard: React.FC<EditDashboardProps> = ({ website, isOpen, onClose,
             setFormData(response.editableFields);
             generateSidebarItems(response.editableFields);
           } else {
-            // Use the provided JSON schema as fallback
-            const defaultData = {
-              "PAGE_TITLE": "ICICI Prudential Anime Fund 8",
-              "FUND_INFO": {
-                "ABOUT": "About",
-                "HEADING": "ICICI Prudential Anime Fund 8",
-                "CARD_CONTENTS": {
-                  "POINT 1": "ICICI Prudential Anime Fund 8 is a unique investment opportunity designed specifically for anime enthusiasts."
-                }
-              },
-              "HOW_SCHEME_WORK": {
-                "DESCRIPTIONS": {
-                  "POINT_1": "Invests in companies driving the anime industry globally.",
-                  "POINT_2": "Focuses on sectors like animation, streaming, and merchandise.",
-                  "POINT_3": "Aims to deliver long-term growth by leveraging the booming anime market."
-                }
-              },
-              "WHY_INVEST": {
-                "DESCRIPTIONS": {
-                  "POINT_1": "Tap into the growing global popularity of anime.",
-                  "POINT_2": "Diversify your portfolio with a niche investment theme.",
-                  "POINT_3": "Support and benefit from the expanding anime ecosystem."
-                }
-              },
-              "VIDEO_SECTION": {
-                "CARD_CONTENTS": {
-                  "VIDEO_1": {
-                    "THUMBNAIL": "https://example.com/anime_fund_thumbnail.jpg",
-                    "VIDEO_URL": "https://example.com/anime_fund_video.mp4"
-                  }
-                },
-                "CARD_TITLE": "Unlock insights into the fund - Click to watch now"
-              },
-              "SCHEME_FEATURES": {
-                "HEADING": "Scheme Features",
-                "TABLE_CONTENT": [
-                  {
-                    "TITLE": "Name of scheme",
-                    "DESCRIPTION": "ICICI Prudential Anime Fund 8"
-                  }
-                ]
-              },
-              "WARNING_MESSAGE": "Mutual Fund investments are subject to market risk, read all scheme related documents carefully."
-            };
-            setFormData(defaultData);
-            generateSidebarItems(defaultData);
+            setError('No editable fields found in response');
           }
         } catch (error) {
           console.error('Error fetching editable data:', error);
