@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronRight, ChevronDown } from 'lucide-react';
+import { X, ChevronRight, ChevronDown, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from '@/components/ui/sidebar';
 import { Website } from './WebsiteCard';
@@ -171,53 +172,131 @@ const EditDashboard: React.FC<EditDashboardProps> = ({ website, isOpen, onClose,
   };
 
   const renderField = (path: string, value: any) => {
+    const fieldLabel = path.split('.').pop()?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '';
+    
     if (typeof value === 'string') {
-      if (value.length > 100) {
-        return (
-          <Textarea
-            value={value}
-            onChange={(e) => handleFieldChange(path, e.target.value)}
-            className="min-h-[120px] resize-none"
-          />
-        );
-      } else {
-        return (
-          <Input
-            value={value}
-            onChange={(e) => handleFieldChange(path, e.target.value)}
-          />
-        );
-      }
+      return (
+        <Card className="transition-all duration-200 hover:shadow-md">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">{fieldLabel}</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {value.length > 100 ? (
+              <Textarea
+                value={value}
+                onChange={(e) => handleFieldChange(path, e.target.value)}
+                className="min-h-[120px] resize-none border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                placeholder={`Enter ${fieldLabel.toLowerCase()}...`}
+              />
+            ) : (
+              <Input
+                value={value}
+                onChange={(e) => handleFieldChange(path, e.target.value)}
+                className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                placeholder={`Enter ${fieldLabel.toLowerCase()}...`}
+              />
+            )}
+            <div className="flex justify-end mt-3">
+              <Button 
+                size="sm" 
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-20"
+              >
+                {isSubmitting ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <Save className="h-3 w-3 mr-1" />
+                    Update
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      );
     } else if (typeof value === 'number') {
       return (
-        <Input
-          type="number"
-          value={value}
-          onChange={(e) => handleFieldChange(path, Number(e.target.value))}
-        />
+        <Card className="transition-all duration-200 hover:shadow-md">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">{fieldLabel}</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <Input
+              type="number"
+              value={value}
+              onChange={(e) => handleFieldChange(path, Number(e.target.value))}
+              className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+              placeholder={`Enter ${fieldLabel.toLowerCase()}...`}
+            />
+            <div className="flex justify-end mt-3">
+              <Button 
+                size="sm" 
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-20"
+              >
+                {isSubmitting ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <Save className="h-3 w-3 mr-1" />
+                    Update
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       );
     } else if (Array.isArray(value)) {
       return (
         <div className="space-y-4">
           {value.map((item, index) => (
-            <div key={index} className="p-4 border rounded-lg">
-              <h4 className="font-medium mb-2">Item {index + 1}</h4>
-              {Object.entries(item).map(([key, val]) => (
-                <div key={key} className="mb-3">
-                  <label className="block text-sm font-medium mb-1">
-                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  </label>
-                  <Input
-                    value={val as string}
-                    onChange={(e) => {
-                      const newArray = [...value];
-                      newArray[index] = { ...newArray[index], [key]: e.target.value };
-                      handleFieldChange(path, newArray);
-                    }}
-                  />
+            <Card key={index} className="transition-all duration-200 hover:shadow-md">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {fieldLabel} - Item {index + 1}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-4">
+                {Object.entries(item).map(([key, val]) => (
+                  <div key={key} className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </label>
+                    <Input
+                      value={val as string}
+                      onChange={(e) => {
+                        const newArray = [...value];
+                        newArray[index] = { ...newArray[index], [key]: e.target.value };
+                        handleFieldChange(path, newArray);
+                      }}
+                      className="border-0 bg-muted/30 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      placeholder={`Enter ${key.replace(/_/g, ' ').toLowerCase()}...`}
+                    />
+                  </div>
+                ))}
+                <div className="flex justify-end pt-2">
+                  <Button 
+                    size="sm" 
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="w-20"
+                  >
+                    {isSubmitting ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        <Save className="h-3 w-3 mr-1" />
+                        Update
+                      </>
+                    )}
+                  </Button>
                 </div>
-              ))}
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       );
@@ -225,12 +304,16 @@ const EditDashboard: React.FC<EditDashboardProps> = ({ website, isOpen, onClose,
       return (
         <div className="space-y-4">
           {Object.entries(value).map(([key, val]) => (
-            <div key={key}>
-              <label className="block text-sm font-medium mb-1">
-                {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-              </label>
-              {renderField(`${path}.${key}`, val)}
-            </div>
+            <Card key={key} className="transition-all duration-200 hover:shadow-md">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {renderField(`${path}.${key}`, val)}
+              </CardContent>
+            </Card>
           ))}
         </div>
       );
@@ -244,9 +327,9 @@ const EditDashboard: React.FC<EditDashboardProps> = ({ website, isOpen, onClose,
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[95vh] p-0">
+      <DialogContent className="max-w-7xl max-h-[70vh] p-0">
         <SidebarProvider>
-          <div className="flex h-[90vh] w-full">
+          <div className="flex h-[70vh] w-full">
             <Sidebar className="w-80 border-r">
               <div className="p-4 border-b">
                 <h2 className="font-semibold text-lg">Edit Dashboard</h2>
@@ -295,19 +378,9 @@ const EditDashboard: React.FC<EditDashboardProps> = ({ website, isOpen, onClose,
                 )}
               </div>
 
-              <div className="flex justify-end gap-3 p-4 border-t">
+              <div className="flex justify-end gap-3 p-4 border-t bg-muted/20">
                 <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmit} disabled={isLoading || isSubmitting || !!error}>
-                  {isSubmitting ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Updating...
-                    </div>
-                  ) : (
-                    'Save Changes'
-                  )}
+                  Close Dashboard
                 </Button>
               </div>
             </div>
