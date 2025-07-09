@@ -1,91 +1,126 @@
 
-// Mock demo data for edit functionality
+// Mock demo data for edit functionality - Array-friendly structure
 const DEMO_WEBSITE_DATA = {
   "PAGE_TITLE": "ICICI Prudential Anime Fund 8",
   "FUND_INFO": {
     "ABOUT": "About",
     "HEADING": "ICICI Prudential Anime Fund 8",
-    "CARD_CONTENTS": {
-      "POINT 1": "ICICI Prudential Anime Fund 8 is a unique investment opportunity designed specifically for anime enthusiasts. This fund aims to capture the growth potential of companies involved in the anime industry, including animation studios, merchandise creators, streaming platforms, and more. By investing in this fund, you can align your passion for anime with your financial goals, making it a perfect blend of fandom and finance."
-    }
+    "CARD_CONTENTS": [
+      {
+        "id": "point_1",
+        "text": "ICICI Prudential Anime Fund 8 is a unique investment opportunity designed specifically for anime enthusiasts. This fund aims to capture the growth potential of companies involved in the anime industry, including animation studios, merchandise creators, streaming platforms, and more. By investing in this fund, you can align your passion for anime with your financial goals, making it a perfect blend of fandom and finance."
+      }
+    ]
   },
   "HOW_SCHEME_WORK": {
-    "DESCRIPTIONS": {
-      "POINT_1": "Invests in companies driving the anime industry globally.",
-      "POINT_2": "Focuses on sectors like animation, streaming, and merchandise.",
-      "POINT_3": "Aims to deliver long-term growth by leveraging the booming anime market."
-    }
+    "DESCRIPTIONS": [
+      {
+        "id": "point_1",
+        "text": "Invests in companies driving the anime industry globally."
+      },
+      {
+        "id": "point_2", 
+        "text": "Focuses on sectors like animation, streaming, and merchandise."
+      },
+      {
+        "id": "point_3",
+        "text": "Aims to deliver long-term growth by leveraging the booming anime market."
+      }
+    ]
   },
   "WHY_INVEST": {
-    "DESCRIPTIONS": {
-      "POINT_1": "Tap into the growing global popularity of anime.",
-      "POINT_2": "Diversify your portfolio with a niche investment theme.",
-      "POINT_3": "Support and benefit from the expanding anime ecosystem."
-    }
+    "DESCRIPTIONS": [
+      {
+        "id": "point_1",
+        "text": "Tap into the growing global popularity of anime."
+      },
+      {
+        "id": "point_2",
+        "text": "Diversify your portfolio with a niche investment theme."
+      },
+      {
+        "id": "point_3",
+        "text": "Support and benefit from the expanding anime ecosystem."
+      }
+    ]
   },
   "VIDEO_SECTION": {
-    "CARD_CONTENTS": {
-      "VIDEO_1": {
-        "THUMBNAIL": "https://example.com/anime_fund_thumbnail.jpg",
-        "VIDEO_URL": "https://example.com/anime_fund_video.mp4"
+    "CARD_CONTENTS": [
+      {
+        "id": "video_1",
+        "thumbnail": "https://example.com/anime_fund_thumbnail.jpg",
+        "videoUrl": "https://example.com/anime_fund_video.mp4"
       }
-    },
+    ],
     "CARD_TITLE": "Unlock insights into the fund - Click to watch now"
   },
   "SCHEME_FEATURES": {
     "HEADING": "Scheme Features",
     "TABLE_CONTENT": [
       {
-        "TITLE": "Name of scheme",
-        "DESCRIPTION": "ICICI Prudential Anime Fund 8"
+        "id": "scheme_name",
+        "title": "Name of scheme",
+        "description": "ICICI Prudential Anime Fund 8"
       },
       {
-        "TITLE": "Type of scheme",
-        "DESCRIPTION": "Thematic Equity Fund - Anime Industry Focus"
+        "id": "scheme_type",
+        "title": "Type of scheme",
+        "description": "Thematic Equity Fund - Anime Industry Focus"
       },
       {
-        "TITLE": "NFO Period",
-        "DESCRIPTION": "NFO Period October 1, 2023 to October 15, 2023"
+        "id": "nfo_period",
+        "title": "NFO Period",
+        "description": "NFO Period October 1, 2023 to October 15, 2023"
       },
       {
-        "TITLE": "Benchmark Index",
-        "DESCRIPTION": "Anime Industry Growth Index"
+        "id": "benchmark_index",
+        "title": "Benchmark Index",
+        "description": "Anime Industry Growth Index"
       },
       {
-        "TITLE": "Entry Load",
-        "DESCRIPTION": "Nil"
+        "id": "entry_load",
+        "title": "Entry Load",
+        "description": "Nil"
       },
       {
-        "TITLE": "Exit Load",
-        "DESCRIPTION": "<12 months: 1%; >12 months: Nil"
+        "id": "exit_load",
+        "title": "Exit Load",
+        "description": "<12 months: 1%; >12 months: Nil"
       },
       {
-        "TITLE": "Minimum Application Amount",
-        "DESCRIPTION": "₹5,000"
+        "id": "min_application",
+        "title": "Minimum Application Amount",
+        "description": "₹5,000"
       },
       {
-        "TITLE": "Minimum Additional Application Amount",
-        "DESCRIPTION": "₹1,000"
+        "id": "min_additional",
+        "title": "Minimum Additional Application Amount",
+        "description": "₹1,000"
       },
       {
-        "TITLE": "Minimum redemption Amount",
-        "DESCRIPTION": "₹500"
+        "id": "min_redemption",
+        "title": "Minimum redemption Amount",
+        "description": "₹500"
       },
       {
-        "TITLE": "Options",
-        "DESCRIPTION": "Growth and Dividend Options"
+        "id": "options",
+        "title": "Options",
+        "description": "Growth and Dividend Options"
       },
       {
-        "TITLE": "SIP/SWP/STP",
-        "DESCRIPTION": "Available"
+        "id": "sip_swp_stp",
+        "title": "SIP/SWP/STP",
+        "description": "Available"
       },
       {
-        "TITLE": "Plan",
-        "DESCRIPTION": "Regular and Direct Plans"
+        "id": "plan",
+        "title": "Plan",
+        "description": "Regular and Direct Plans"
       },
       {
-        "TITLE": "Fund Managers",
-        "DESCRIPTION": "Mr. Anime Enthusiast and Ms. Global Markets Expert"
+        "id": "fund_managers",
+        "title": "Fund Managers",
+        "description": "Mr. Anime Enthusiast and Ms. Global Markets Expert"
       }
     ]
   },
