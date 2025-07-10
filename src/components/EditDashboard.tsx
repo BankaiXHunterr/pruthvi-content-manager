@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronRight, ChevronDown, Edit, Trash2, Plus, Copy, Check } from 'lucide-react';
+import { X, Edit, Save, Table, FileText, Video, Download, AlertTriangle, Info, Target, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Website } from './WebsiteCard';
 import { apiService } from '../services/apiService';
@@ -20,29 +18,31 @@ interface EditDashboardProps {
   onSave: (website: Website, updatedData: Record<string, any>) => void;
 }
 
-interface SidebarItem {
+interface SidebarSection {
   id: string;
   label: string;
-  children?: SidebarItem[];
-  isExpanded?: boolean;
-  isArray?: boolean;
-}
-
-interface Breadcrumb {
-  id: string;
-  label: string;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 const EditDashboard: React.FC<EditDashboardProps> = ({ website, isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
-  const [sidebarItems, setSidebarItems] = useState<SidebarItem[]>([]);
-  const [activeSection, setActiveSection] = useState<string>('');
-  const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
+  const [activeSection, setActiveSection] = useState<string>('PAGE_TITLE');
+  const [editingFields, setEditingFields] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [jsonPreviewOpen, setJsonPreviewOpen] = useState(false);
-  const [copySuccess, setCopySuccess] = useState(false);
+
+  const sidebarSections: SidebarSection[] = [
+    { id: 'PAGE_TITLE', label: 'Page Title', icon: FileText },
+    { id: 'FUND_INFO', label: 'Fund Info', icon: Info },
+    { id: 'HOW_SCHEME_WORK', label: 'How Scheme Works', icon: Target },
+    { id: 'WHY_INVEST', label: 'Why Invest', icon: Target },
+    { id: 'VIDEO_SECTION', label: 'Video Section', icon: Video },
+    { id: 'SCHEME_FEATURES', label: 'Scheme Features', icon: Table },
+    { id: 'SCHEME_RISKOMETER', label: 'Risk Meter', icon: AlertTriangle },
+    { id: 'DOWNLOAD_BUTTON_SECTION', label: 'Downloads', icon: Download },
+    { id: 'WARNING_MESSAGE', label: 'Warning Message', icon: AlertTriangle },
+  ];
 
   useEffect(() => {
     const fetchEditableData = async () => {
@@ -54,9 +54,64 @@ const EditDashboard: React.FC<EditDashboardProps> = ({ website, isOpen, onClose,
           
           if (response && response.editableFields) {
             setFormData(response.editableFields);
-            generateSidebarItems(response.editableFields);
           } else {
-            setError('No editable fields found in response');
+            // Set default structure if no data exists
+            setFormData({
+              PAGE_TITLE: "ICICI Prudential Test Future Fund",
+              FUND_INFO: {
+                ABOUT: "About",
+                HEADING: "ICICI Prudential Test Future Fund",
+                CARD_CONTENTS: {
+                  "POINT 1": "The ICICI Prudential Test Future Fund is a demo fund designed to showcase the potential of innovative investment strategies."
+                }
+              },
+              HOW_SCHEME_WORK: {
+                DESCRIPTIONS: {
+                  POINT_1: "Invests in a diversified portfolio aligned with futuristic themes.",
+                  POINT_2: "Focuses on long-term growth opportunities in emerging sectors.",
+                  POINT_3: "Designed to balance risk and reward for optimal returns."
+                }
+              },
+              WHY_INVEST: {
+                DESCRIPTIONS: {
+                  POINT_1: "Gain exposure to innovative and future-ready investment themes.",
+                  POINT_2: "Diversify your portfolio with a forward-looking strategy.",
+                  POINT_3: "Leverage expert fund management for potential long-term growth."
+                }
+              },
+              VIDEO_SECTION: {
+                CARD_CONTENTS: {
+                  VIDEO_1: {
+                    THUMBNAIL: "https://via.placeholder.com/150",
+                    VIDEO_URL: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                  }
+                },
+                CARD_TITLE: "Unlock insights into the fund - Click to watch now"
+              },
+              SCHEME_FEATURES: {
+                HEADING: "Scheme Features",
+                TABLE_CONTENT: [
+                  { TITLE: "Name of scheme", DESCRIPTION: "ICICI Prudential Test Future Fund" },
+                  { TITLE: "Type of scheme", DESCRIPTION: "Open-ended equity scheme investing in futuristic themes" }
+                ]
+              },
+              SCHEME_RISKOMETER: {
+                TITLE: "This product is suitable for investors who are seeking*:",
+                CONTENT: ["Capital appreciation over the long term by investing in a diversified portfolio aligned with futuristic themes."],
+                NOTE_TEXT: "*Investors should consult their financial distributors if in doubt about whether the product is suitable for them.",
+                RISK: "Moderately High",
+                RISK_VALUE: "4",
+                RISK_STATUS: "Investors understand that their principal will be at moderately high risk.",
+                BENCHMARK_NAME: "Future Growth Index"
+              },
+              DOWNLOAD_BUTTON_SECTION: {
+                DOWNLOAD_FACTSHEET: "Download Presentation",
+                DOWNLOAD_FACTSHEET_PATH: "https://www.google.com",
+                DOWNLOAD_ONE_PAGER: "Download SID",
+                DOWNLOAD_ONE_PAGER_PATH: "https://www.google.com"
+              },
+              WARNING_MESSAGE: "Mutual Fund investments are subject to market risk, read all scheme related documents carefully."
+            });
           }
         } catch (error) {
           console.error('Error fetching editable data:', error);
@@ -70,119 +125,59 @@ const EditDashboard: React.FC<EditDashboardProps> = ({ website, isOpen, onClose,
     fetchEditableData();
   }, [website, isOpen]);
 
-  const generateSidebarItems = (data: Record<string, any>, prefix = ''): SidebarItem[] => {
-    const items: SidebarItem[] = [];
-    
-    Object.entries(data).forEach(([key, value]) => {
-      const itemId = prefix ? `${prefix}.${key}` : key;
-      const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-      
-      if (Array.isArray(value)) {
-        items.push({
-          id: itemId,
-          label,
-          isArray: true
-        });
-      } else if (typeof value === 'object' && value !== null) {
-        const children = generateSidebarItems(value, itemId);
-        items.push({
-          id: itemId,
-          label,
-          children,
-          isExpanded: false
-        });
-      } else {
-        items.push({
-          id: itemId,
-          label
-        });
-      }
-    });
-    
-    setSidebarItems(items);
-    if (items.length > 0 && !activeSection) {
-      setActiveSection(items[0].id);
-      updateBreadcrumbs(items[0].id);
-    }
-    
-    return items;
-  };
-
-  const updateBreadcrumbs = (path: string) => {
-    const parts = path.split('.');
-    const breadcrumbs: Breadcrumb[] = [];
-    
-    for (let i = 0; i < parts.length; i++) {
-      const id = parts.slice(0, i + 1).join('.');
-      const label = parts[i].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-      breadcrumbs.push({ id, label });
-    }
-    
-    setBreadcrumbs(breadcrumbs);
-  };
-
-  const toggleSidebarItem = (itemId: string) => {
-    const updateItems = (items: SidebarItem[]): SidebarItem[] => {
-      return items.map(item => {
-        if (item.id === itemId) {
-          return { ...item, isExpanded: !item.isExpanded };
-        }
-        if (item.children) {
-          return { ...item, children: updateItems(item.children) };
-        }
-        return item;
-      });
-    };
-    
-    setSidebarItems(updateItems(sidebarItems));
-  };
-
-  const handleSectionClick = (itemId: string) => {
-    setActiveSection(itemId);
-    updateBreadcrumbs(itemId);
-  };
-
-  const getNestedValue = (obj: any, path: string): any => {
-    return path.split('.').reduce((current, key) => current?.[key], obj);
-  };
-
-  const setNestedValue = (obj: any, path: string, value: any): any => {
-    const keys = path.split('.');
-    const lastKey = keys.pop()!;
-    const target = keys.reduce((current, key) => {
-      if (!current[key]) current[key] = {};
-      return current[key];
-    }, obj);
-    target[lastKey] = value;
-    return { ...obj };
-  };
-
-  const handleArrayItemUpdate = (path: string, index: number, field: string, value: any) => {
-    const arrayData = getNestedValue(formData, path);
-    if (Array.isArray(arrayData)) {
-      const updatedArray = [...arrayData];
-      updatedArray[index] = { ...updatedArray[index], [field]: value };
-      setFormData(prev => setNestedValue(prev, path, updatedArray));
-    }
-  };
-
-  const handleArrayItemDelete = (path: string, index: number) => {
-    const arrayData = getNestedValue(formData, path);
-    if (Array.isArray(arrayData)) {
-      const updatedArray = arrayData.filter((_, i) => i !== index);
-      setFormData(prev => setNestedValue(prev, path, updatedArray));
-    }
-  };
-
-  const handleArrayItemAdd = (path: string) => {
-    const arrayData = getNestedValue(formData, path) || [];
-    const newItem = { id: `new_${Date.now()}`, text: '' };
-    const updatedArray = [...arrayData, newItem];
-    setFormData(prev => setNestedValue(prev, path, updatedArray));
-  };
-
   const handleFieldChange = (path: string, value: any) => {
-    setFormData(prev => setNestedValue(prev, path, value));
+    const keys = path.split('.');
+    const newData = { ...formData };
+    let current = newData;
+    
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (!current[keys[i]]) current[keys[i]] = {};
+      current = current[keys[i]];
+    }
+    
+    current[keys[keys.length - 1]] = value;
+    setFormData(newData);
+  };
+
+  const handleArrayItemChange = (sectionPath: string, index: number, field: string, value: string) => {
+    const newData = { ...formData };
+    const section = newData[sectionPath];
+    if (section && Array.isArray(section.TABLE_CONTENT)) {
+      section.TABLE_CONTENT[index][field] = value;
+      setFormData(newData);
+    }
+  };
+
+  const addTableRow = (sectionPath: string) => {
+    const newData = { ...formData };
+    const section = newData[sectionPath];
+    if (section && Array.isArray(section.TABLE_CONTENT)) {
+      section.TABLE_CONTENT.push({ TITLE: "", DESCRIPTION: "" });
+      setFormData(newData);
+    }
+  };
+
+  const removeTableRow = (sectionPath: string, index: number) => {
+    const newData = { ...formData };
+    const section = newData[sectionPath];
+    if (section && Array.isArray(section.TABLE_CONTENT)) {
+      section.TABLE_CONTENT.splice(index, 1);
+      setFormData(newData);
+    }
+  };
+
+  const toggleEdit = (fieldPath: string) => {
+    setEditingFields(prev => ({
+      ...prev,
+      [fieldPath]: !prev[fieldPath]
+    }));
+  };
+
+  const saveField = (fieldPath: string) => {
+    setEditingFields(prev => ({
+      ...prev,
+      [fieldPath]: false
+    }));
   };
 
   const handleSubmit = async () => {
@@ -203,160 +198,352 @@ const EditDashboard: React.FC<EditDashboardProps> = ({ website, isOpen, onClose,
     }
   };
 
-  const copyJsonToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(formData, null, 2));
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy JSON:', error);
-    }
-  };
+  const EditableField: React.FC<{
+    label: string;
+    value: string;
+    path: string;
+    multiline?: boolean;
+  }> = ({ label, value, path, multiline = false }) => {
+    const isEditing = editingFields[path];
 
-  const renderSidebarItems = (items: SidebarItem[], level = 0) => {
-    return items.map(item => (
-      <SidebarMenuItem key={item.id} className={`ml-${level * 4}`}>
-        {item.children ? (
-          <Collapsible open={item.isExpanded} onOpenChange={() => toggleSidebarItem(item.id)}>
-            <CollapsibleTrigger asChild>
-              <SidebarMenuButton className="w-full justify-between">
-                <span className="flex items-center">
-                  {item.isArray && <Badge variant="secondary" className="mr-2 text-xs">Array</Badge>}
-                  {item.label}
-                </span>
-                {item.isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-              </SidebarMenuButton>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="ml-4 mt-2">
-                {renderSidebarItems(item.children, level + 1)}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-muted-foreground">{label}</label>
+          <div className="flex gap-2">
+            {!isEditing ? (
+              <Button size="sm" variant="ghost" onClick={() => toggleEdit(path)}>
+                <Edit className="h-3 w-3" />
+              </Button>
+            ) : (
+              <Button size="sm" variant="ghost" onClick={() => saveField(path)}>
+                <Save className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        </div>
+        {multiline ? (
+          <Textarea
+            value={value || ''}
+            onChange={(e) => handleFieldChange(path, e.target.value)}
+            disabled={!isEditing}
+            className="min-h-[80px]"
+            placeholder={`Enter ${label.toLowerCase()}...`}
+          />
         ) : (
-          <SidebarMenuButton
-            onClick={() => handleSectionClick(item.id)}
-            className={`w-full justify-start ${activeSection === item.id ? 'bg-muted font-medium' : ''}`}
-          >
-            {item.isArray && <Badge variant="secondary" className="mr-2 text-xs">Array</Badge>}
-            {item.label}
-          </SidebarMenuButton>
+          <Input
+            value={value || ''}
+            onChange={(e) => handleFieldChange(path, e.target.value)}
+            disabled={!isEditing}
+            placeholder={`Enter ${label.toLowerCase()}...`}
+          />
         )}
-      </SidebarMenuItem>
-    ));
+      </div>
+    );
   };
 
-  const renderBreadcrumbs = () => (
-    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-      {breadcrumbs.map((crumb, index) => (
-        <React.Fragment key={crumb.id}>
-          <button
-            onClick={() => handleSectionClick(crumb.id)}
-            className="hover:text-foreground transition-colors"
-          >
-            {crumb.label}
-          </button>
-          {index < breadcrumbs.length - 1 && <ChevronRight className="h-3 w-3" />}
-        </React.Fragment>
-      ))}
-    </div>
+  const renderPageTitle = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          Page Title
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <EditableField
+          label="Landing Page Title"
+          value={formData.PAGE_TITLE}
+          path="PAGE_TITLE"
+        />
+      </CardContent>
+    </Card>
   );
 
-  const renderArrayContent = (data: any[], path: string) => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data.map((item, index) => (
-          <Card key={item.id || index} className="group transition-all duration-200 hover:shadow-md border-border">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">Item {index + 1}</CardTitle>
-                <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
-                    <Edit className="h-3 w-3" />
-                  </Button>
+  const renderFundInfo = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Info className="h-5 w-5" />
+          Fund Information
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <EditableField
+          label="About"
+          value={formData.FUND_INFO?.ABOUT}
+          path="FUND_INFO.ABOUT"
+        />
+        <EditableField
+          label="Heading"
+          value={formData.FUND_INFO?.HEADING}
+          path="FUND_INFO.HEADING"
+        />
+        <EditableField
+          label="Description"
+          value={formData.FUND_INFO?.CARD_CONTENTS?.["POINT 1"]}
+          path="FUND_INFO.CARD_CONTENTS.POINT 1"
+          multiline
+        />
+      </CardContent>
+    </Card>
+  );
+
+  const renderDescriptionSection = (sectionKey: string, title: string, icon: React.ComponentType<{ className?: string }>) => {
+    const Icon = icon;
+    const section = formData[sectionKey];
+    
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Icon className="h-5 w-5" />
+            {title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {section?.DESCRIPTIONS && Object.entries(section.DESCRIPTIONS).map(([key, value]) => (
+            <EditableField
+              key={key}
+              label={key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              value={value as string}
+              path={`${sectionKey}.DESCRIPTIONS.${key}`}
+              multiline
+            />
+          ))}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderVideoSection = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Video className="h-5 w-5" />
+          Video Section
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <EditableField
+          label="Card Title"
+          value={formData.VIDEO_SECTION?.CARD_TITLE}
+          path="VIDEO_SECTION.CARD_TITLE"
+        />
+        <EditableField
+          label="Thumbnail URL"
+          value={formData.VIDEO_SECTION?.CARD_CONTENTS?.VIDEO_1?.THUMBNAIL}
+          path="VIDEO_SECTION.CARD_CONTENTS.VIDEO_1.THUMBNAIL"
+        />
+        <EditableField
+          label="Video URL"
+          value={formData.VIDEO_SECTION?.CARD_CONTENTS?.VIDEO_1?.VIDEO_URL}
+          path="VIDEO_SECTION.CARD_CONTENTS.VIDEO_1.VIDEO_URL"
+        />
+      </CardContent>
+    </Card>
+  );
+
+  const renderSchemeFeatures = () => (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Table className="h-5 w-5" />
+            Scheme Features
+          </CardTitle>
+          <Button size="sm" onClick={() => addTableRow('SCHEME_FEATURES')}>
+            Add Row
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <EditableField
+          label="Heading"
+          value={formData.SCHEME_FEATURES?.HEADING}
+          path="SCHEME_FEATURES.HEADING"
+        />
+        <div className="space-y-3">
+          {formData.SCHEME_FEATURES?.TABLE_CONTENT?.map((item: any, index: number) => (
+            <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Title</label>
+                <Input
+                  value={item.TITLE || ''}
+                  onChange={(e) => handleArrayItemChange('SCHEME_FEATURES', index, 'TITLE', e.target.value)}
+                  placeholder="Enter title..."
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-muted-foreground">Description</label>
                   <Button 
                     size="sm" 
                     variant="ghost" 
-                    className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                    onClick={() => handleArrayItemDelete(path, index)}
+                    onClick={() => removeTableRow('SCHEME_FEATURES', index)}
+                    className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <X className="h-3 w-3" />
                   </Button>
                 </div>
+                <Textarea
+                  value={item.DESCRIPTION || ''}
+                  onChange={(e) => handleArrayItemChange('SCHEME_FEATURES', index, 'DESCRIPTION', e.target.value)}
+                  placeholder="Enter description..."
+                  className="min-h-[60px]"
+                />
               </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {Object.entries(item).map(([key, value]) => (
-                <div key={key} className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  </label>
-                  {typeof value === 'string' && value.length > 100 ? (
-                    <Textarea
-                      value={value}
-                      onChange={(e) => handleArrayItemUpdate(path, index, key, e.target.value)}
-                      className="min-h-[80px] text-sm"
-                      placeholder={`Enter ${key.replace(/_/g, ' ').toLowerCase()}...`}
-                    />
-                  ) : (
-                    <Input
-                      value={value as string}
-                      onChange={(e) => handleArrayItemUpdate(path, index, key, e.target.value)}
-                      className="text-sm"
-                      placeholder={`Enter ${key.replace(/_/g, ' ').toLowerCase()}...`}
-                    />
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        ))}
-        
-        <Card className="border-2 border-dashed border-muted-foreground/25 flex items-center justify-center min-h-[200px] hover:border-muted-foreground/50 transition-colors cursor-pointer" onClick={() => handleArrayItemAdd(path)}>
-          <div className="text-center text-muted-foreground">
-            <Plus className="h-8 w-8 mx-auto mb-2" />
-            <p className="text-sm font-medium">Add New Item</p>
-          </div>
-        </Card>
-      </div>
-    </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 
-  const renderFieldContent = (value: any, path: string) => {
-    if (typeof value === 'string') {
-      return (
-        <Card className="transition-all duration-200 hover:shadow-md">
-          <CardContent className="p-6">
-            {value.length > 100 ? (
-              <Textarea
-                value={value}
-                onChange={(e) => handleFieldChange(path, e.target.value)}
-                className="min-h-[120px] border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
-                placeholder="Enter text..."
-              />
-            ) : (
-              <Input
-                value={value}
-                onChange={(e) => handleFieldChange(path, e.target.value)}
-                className="border-0 p-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
-                placeholder="Enter text..."
-              />
-            )}
-          </CardContent>
-        </Card>
-      );
-    }
-    return null;
-  };
+  const renderRiskometer = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5" />
+          Risk Meter
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <EditableField
+          label="Title"
+          value={formData.SCHEME_RISKOMETER?.TITLE}
+          path="SCHEME_RISKOMETER.TITLE"
+          multiline
+        />
+        <EditableField
+          label="Content"
+          value={formData.SCHEME_RISKOMETER?.CONTENT?.[0]}
+          path="SCHEME_RISKOMETER.CONTENT.0"
+          multiline
+        />
+        <EditableField
+          label="Note Text"
+          value={formData.SCHEME_RISKOMETER?.NOTE_TEXT}
+          path="SCHEME_RISKOMETER.NOTE_TEXT"
+          multiline
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <EditableField
+            label="Risk"
+            value={formData.SCHEME_RISKOMETER?.RISK}
+            path="SCHEME_RISKOMETER.RISK"
+          />
+          <EditableField
+            label="Risk Value"
+            value={formData.SCHEME_RISKOMETER?.RISK_VALUE}
+            path="SCHEME_RISKOMETER.RISK_VALUE"
+          />
+        </div>
+        <EditableField
+          label="Risk Status"
+          value={formData.SCHEME_RISKOMETER?.RISK_STATUS}
+          path="SCHEME_RISKOMETER.RISK_STATUS"
+          multiline
+        />
+        <EditableField
+          label="Benchmark Name"
+          value={formData.SCHEME_RISKOMETER?.BENCHMARK_NAME}
+          path="SCHEME_RISKOMETER.BENCHMARK_NAME"
+        />
+      </CardContent>
+    </Card>
+  );
 
-  const activeData = getNestedValue(formData, activeSection);
-  const isActiveArray = Array.isArray(activeData);
+  const renderDownloadSection = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Download className="h-5 w-5" />
+          Download Section
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <EditableField
+            label="Factsheet Label"
+            value={formData.DOWNLOAD_BUTTON_SECTION?.DOWNLOAD_FACTSHEET}
+            path="DOWNLOAD_BUTTON_SECTION.DOWNLOAD_FACTSHEET"
+          />
+          <EditableField
+            label="Factsheet Path"
+            value={formData.DOWNLOAD_BUTTON_SECTION?.DOWNLOAD_FACTSHEET_PATH}
+            path="DOWNLOAD_BUTTON_SECTION.DOWNLOAD_FACTSHEET_PATH"
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <EditableField
+            label="One Pager Label"
+            value={formData.DOWNLOAD_BUTTON_SECTION?.DOWNLOAD_ONE_PAGER}
+            path="DOWNLOAD_BUTTON_SECTION.DOWNLOAD_ONE_PAGER"
+          />
+          <EditableField
+            label="One Pager Path"
+            value={formData.DOWNLOAD_BUTTON_SECTION?.DOWNLOAD_ONE_PAGER_PATH}
+            path="DOWNLOAD_BUTTON_SECTION.DOWNLOAD_ONE_PAGER_PATH"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderWarningMessage = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5" />
+          Warning Message
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <EditableField
+          label="Warning Message"
+          value={formData.WARNING_MESSAGE}
+          path="WARNING_MESSAGE"
+          multiline
+        />
+      </CardContent>
+    </Card>
+  );
+
+  const renderMainContent = () => {
+    switch (activeSection) {
+      case 'PAGE_TITLE':
+        return renderPageTitle();
+      case 'FUND_INFO':
+        return renderFundInfo();
+      case 'HOW_SCHEME_WORK':
+        return renderDescriptionSection('HOW_SCHEME_WORK', 'How Scheme Works', Target);
+      case 'WHY_INVEST':
+        return renderDescriptionSection('WHY_INVEST', 'Why Invest', Target);
+      case 'VIDEO_SECTION':
+        return renderVideoSection();
+      case 'SCHEME_FEATURES':
+        return renderSchemeFeatures();
+      case 'SCHEME_RISKOMETER':
+        return renderRiskometer();
+      case 'DOWNLOAD_BUTTON_SECTION':
+        return renderDownloadSection();
+      case 'WARNING_MESSAGE':
+        return renderWarningMessage();
+      default:
+        return (
+          <div className="text-center py-12 text-muted-foreground">
+            Select a section to edit
+          </div>
+        );
+    }
+  };
 
   if (!website) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl h-[70vh] p-0 gap-0">
+      <DialogContent className="max-w-7xl h-[80vh] p-0 gap-0">
         <SidebarProvider>
           <div className="flex h-full w-full">
             <Sidebar className="w-80 border-r">
@@ -366,10 +553,25 @@ const EditDashboard: React.FC<EditDashboardProps> = ({ website, isOpen, onClose,
               </div>
               <SidebarContent>
                 <SidebarGroup>
-                  <SidebarGroupLabel>Data Structure</SidebarGroupLabel>
+                  <SidebarGroupLabel>Sections</SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu>
-                      {renderSidebarItems(sidebarItems)}
+                      {sidebarSections.map((section) => {
+                        const Icon = section.icon;
+                        return (
+                          <SidebarMenuItem key={section.id}>
+                            <SidebarMenuButton
+                              onClick={() => setActiveSection(section.id)}
+                              className={`w-full justify-start ${
+                                activeSection === section.id ? 'bg-muted font-medium' : ''
+                              }`}
+                            >
+                              <Icon className="h-4 w-4 mr-2" />
+                              {section.label}
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        );
+                      })}
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </SidebarGroup>
@@ -378,85 +580,45 @@ const EditDashboard: React.FC<EditDashboardProps> = ({ website, isOpen, onClose,
 
             <div className="flex-1 flex flex-col">
               <div className="flex items-center justify-between p-4 border-b">
-                <div className="flex-1">
-                  {renderBreadcrumbs()}
-                </div>
+                <h3 className="font-semibold">
+                  {sidebarSections.find(s => s.id === activeSection)?.label}
+                </h3>
                 <Button variant="ghost" size="sm" onClick={onClose}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
 
-              <div className="flex-1 overflow-hidden flex flex-col">
-                <ScrollArea className="flex-1 p-6">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                      <span className="ml-3 text-muted-foreground">Loading...</span>
-                    </div>
-                  ) : error ? (
-                    <div className="text-center py-12">
-                      <p className="text-destructive mb-4">{error}</p>
-                      <Button onClick={() => window.location.reload()} variant="outline">
-                        Retry
-                      </Button>
-                    </div>
-                  ) : activeData ? (
-                    <div className="space-y-6">
-                      {isActiveArray ? renderArrayContent(activeData, activeSection) : renderFieldContent(activeData, activeSection)}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      Select a section to edit
-                    </div>
-                  )}
-                </ScrollArea>
-
-                <Collapsible open={jsonPreviewOpen} onOpenChange={setJsonPreviewOpen}>
-                  <div className="border-t">
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" className="w-full justify-between p-4 rounded-none">
-                        <span className="font-medium">JSON Preview</span>
-                        {jsonPreviewOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="p-4 bg-muted/30 border-t">
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="text-sm font-medium">Current JSON Data</span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={copyJsonToClipboard}
-                            className="h-7"
-                          >
-                            {copySuccess ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
-                            {copySuccess ? 'Copied!' : 'Copy'}
-                          </Button>
-                        </div>
-                        <ScrollArea className="h-40">
-                          <pre className="text-xs bg-background p-3 rounded border overflow-x-auto">
-                            <code>{JSON.stringify(formData, null, 2)}</code>
-                          </pre>
-                        </ScrollArea>
-                      </div>
-                    </CollapsibleContent>
+              <ScrollArea className="flex-1 p-6">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <span className="ml-3 text-muted-foreground">Loading...</span>
                   </div>
-                </Collapsible>
-              </div>
+                ) : error ? (
+                  <div className="text-center py-12">
+                    <p className="text-destructive mb-4">{error}</p>
+                    <Button onClick={() => window.location.reload()} variant="outline">
+                      Retry
+                    </Button>
+                  </div>
+                ) : (
+                  renderMainContent()
+                )}
+              </ScrollArea>
 
               <Separator />
               <div className="flex justify-end gap-3 p-4">
                 <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-                  Cancel
+                  Close
                 </Button>
                 <Button onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      Saving...
+                      Updating...
                     </>
                   ) : (
-                    'Save Changes'
+                    'Update'
                   )}
                 </Button>
               </div>
