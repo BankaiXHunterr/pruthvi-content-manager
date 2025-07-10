@@ -278,6 +278,11 @@ const Index = () => {
     }
   };
 
+  const handleEditDashboard = (website: Website) => {
+    setSelectedWebsite(website);
+    setIsEditDashboardOpen(true);
+  };
+
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type, isVisible: true });
   };
@@ -364,15 +369,6 @@ const Index = () => {
                 <Settings className="h-4 w-4" />
                 Backend Config
               </Button>
-              <Button
-                onClick={() => setIsEditDashboardOpen(true)}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Settings className="h-4 w-4" />
-                Edit Dashboard
-              </Button>
             </div>
           </div>
         </div>
@@ -434,6 +430,7 @@ const Index = () => {
                 onApprove={handleApprove}
                 onDeploy={handleDeploy}
                 onStatusUpdate={handleStatusUpdate}
+                onEditDashboard={handleEditDashboard}
                 viewMode={viewMode}
               />
             ))}
@@ -487,7 +484,7 @@ const Index = () => {
         initialData={dashboardData}
         onSave={(data) => {
           setDashboardData(data);
-          showToast('Dashboard data updated successfully', 'success');
+          showToast(`Dashboard data updated for ${selectedWebsite?.name}`, 'success');
         }}
       />
 

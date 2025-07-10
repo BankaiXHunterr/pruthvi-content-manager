@@ -45,6 +45,7 @@ interface WebsiteCardProps {
   onApprove: (website: Website) => void;
   onDeploy?: (website: Website, deployUrl?: string) => void;
   onStatusUpdate?: (website: Website, newStatus: WebsiteStatus, thread?: CommentThread) => void;
+  onEditDashboard?: (website: Website) => void;
   viewMode: 'grid' | 'list';
 }
 
@@ -57,6 +58,7 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
   onApprove,
   onDeploy,
   onStatusUpdate,
+  onEditDashboard,
   viewMode 
 }) => {
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
@@ -340,12 +342,12 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
                   Approve
                 </Button>
               )}
-              {canEdit && (
+              {onEditDashboard && (
                 <Button
-                  onClick={handleEditClick}
+                  onClick={() => onEditDashboard(website)}
                   className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-6 py-2 rounded-md transition-colors duration-200"
                 >
-                  EDIT
+                  Edit Dashboard
                 </Button>
               )}
               {canDelete && (
@@ -595,12 +597,12 @@ const WebsiteCard: React.FC<WebsiteCardProps> = ({
                 <CheckCircle className="h-4 w-4" />
               </Button>
             )}
-            {canEdit && (
+            {onEditDashboard && (
               <Button
-                onClick={handleEditClick}
+                onClick={() => onEditDashboard(website)}
                 className="bg-icici-orange hover:bg-icici-red text-white font-semibold px-4 py-2 rounded-md transition-all duration-200 group-hover:shadow-md"
               >
-                EDIT
+                Edit Dashboard
               </Button>
             )}
           </div>
