@@ -1,149 +1,4 @@
 
-// Mock demo data for edit functionality - Array-friendly structure
-const DEMO_WEBSITE_DATA = {
-  "PAGE_TITLE": "ICICI Prudential Anime Fund 8",
-  "FUND_INFO": {
-    "ABOUT": "About",
-    "HEADING": "ICICI Prudential Anime Fund 8",
-    "CARD_CONTENTS": [
-      {
-        "id": "point_1",
-        "text": "ICICI Prudential Anime Fund 8 is a unique investment opportunity designed specifically for anime enthusiasts. This fund aims to capture the growth potential of companies involved in the anime industry, including animation studios, merchandise creators, streaming platforms, and more. By investing in this fund, you can align your passion for anime with your financial goals, making it a perfect blend of fandom and finance."
-      }
-    ]
-  },
-  "HOW_SCHEME_WORK": {
-    "DESCRIPTIONS": [
-      {
-        "id": "point_1",
-        "text": "Invests in companies driving the anime industry globally."
-      },
-      {
-        "id": "point_2", 
-        "text": "Focuses on sectors like animation, streaming, and merchandise."
-      },
-      {
-        "id": "point_3",
-        "text": "Aims to deliver long-term growth by leveraging the booming anime market."
-      }
-    ]
-  },
-  "WHY_INVEST": {
-    "DESCRIPTIONS": [
-      {
-        "id": "point_1",
-        "text": "Tap into the growing global popularity of anime."
-      },
-      {
-        "id": "point_2",
-        "text": "Diversify your portfolio with a niche investment theme."
-      },
-      {
-        "id": "point_3",
-        "text": "Support and benefit from the expanding anime ecosystem."
-      }
-    ]
-  },
-  "VIDEO_SECTION": {
-    "CARD_CONTENTS": [
-      {
-        "id": "video_1",
-        "thumbnail": "https://example.com/anime_fund_thumbnail.jpg",
-        "videoUrl": "https://example.com/anime_fund_video.mp4"
-      }
-    ],
-    "CARD_TITLE": "Unlock insights into the fund - Click to watch now"
-  },
-  "SCHEME_FEATURES": {
-    "HEADING": "Scheme Features",
-    "TABLE_CONTENT": [
-      {
-        "id": "scheme_name",
-        "title": "Name of scheme",
-        "description": "ICICI Prudential Anime Fund 8"
-      },
-      {
-        "id": "scheme_type",
-        "title": "Type of scheme",
-        "description": "Thematic Equity Fund - Anime Industry Focus"
-      },
-      {
-        "id": "nfo_period",
-        "title": "NFO Period",
-        "description": "NFO Period October 1, 2023 to October 15, 2023"
-      },
-      {
-        "id": "benchmark_index",
-        "title": "Benchmark Index",
-        "description": "Anime Industry Growth Index"
-      },
-      {
-        "id": "entry_load",
-        "title": "Entry Load",
-        "description": "Nil"
-      },
-      {
-        "id": "exit_load",
-        "title": "Exit Load",
-        "description": "<12 months: 1%; >12 months: Nil"
-      },
-      {
-        "id": "min_application",
-        "title": "Minimum Application Amount",
-        "description": "₹5,000"
-      },
-      {
-        "id": "min_additional",
-        "title": "Minimum Additional Application Amount",
-        "description": "₹1,000"
-      },
-      {
-        "id": "min_redemption",
-        "title": "Minimum redemption Amount",
-        "description": "₹500"
-      },
-      {
-        "id": "options",
-        "title": "Options",
-        "description": "Growth and Dividend Options"
-      },
-      {
-        "id": "sip_swp_stp",
-        "title": "SIP/SWP/STP",
-        "description": "Available"
-      },
-      {
-        "id": "plan",
-        "title": "Plan",
-        "description": "Regular and Direct Plans"
-      },
-      {
-        "id": "fund_managers",
-        "title": "Fund Managers",
-        "description": "Mr. Anime Enthusiast and Ms. Global Markets Expert"
-      }
-    ]
-  },
-  "SCHEME_RISKOMETER": {
-    "TITLE": "This product is suitable for investors who are seeking*:",
-    "CONTENT": [
-      "Capital appreciation over the long term by investing in companies driving the anime industry."
-    ],
-    "NOTE_TEXT": "*Investors should consult their financial distributors if in doubt about whether the product is suitable for them.",
-    "RISK": "High",
-    "RISK_VALUE": "5",
-    "RISK_STATUS": "Investors understand that their principal will be at high risk.",
-    "BENCHMARK_NAME": "Anime Industry Growth Index"
-  },
-  "DOWNLOAD_BUTTON_SECTION": {
-    "DOWNLOAD_FACTSHEET": "Download Presentation",
-    "DOWNLOAD_FACTSHEET_PATH": "https://www.google.com",
-    "DOWNLOAD_ONE_PAGER": "Download SID",
-    "DOWNLOAD_ONE_PAGER_PATH": "https://www.google.com"
-  },
-  "WARNING_MESSAGE": "Mutual Fund investments are subject to market risk, read all scheme related documents carefully."
-};
-
 export interface ApiConfig {
   baseUrl: string;
   websocketUrl: string;
@@ -235,17 +90,7 @@ class ApiService {
    * Use Case: View detailed project information
    */
   async getWebsite(id: string) {
-    try {
-      // Try to make the API call first
-      return await this.fetchApi(`/websites/${id}`);
-    } catch (error) {
-      // Fallback to demo data if API fails
-      console.log(`API call failed, using demo data for website ${id}:`, error);
-      return {
-        editableFields: DEMO_WEBSITE_DATA,
-        success: true
-      };
-    }
+    return this.fetchApi(`/websites/${id}`);
   }
 
   /**
@@ -299,21 +144,10 @@ class ApiService {
    * Use Case: Status updates, content changes, project edits
    */
   async updateWebsite(id: string, updates: any) {
-    try {
-      // Try to make the API call first
-      return await this.fetchApi(`/websites/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(updates),
-      });
-    } catch (error) {
-      // Fallback to demo response if API fails
-      console.log(`API call failed, using demo response for updateWebsite ${id}:`, error);
-      return {
-        success: true,
-        message: "Website updated successfully (demo mode)",
-        data: updates
-      };
-    }
+    return this.fetchApi(`/websites/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
   }
 
   /**
