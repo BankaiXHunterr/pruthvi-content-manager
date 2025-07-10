@@ -6,6 +6,7 @@ import EditModal from '../components/EditModal';
 import CommentatorModal from '../components/CommentatorModal';
 import CreateModal from '../components/CreateModal';
 import BackendConfig from '../components/BackendConfig';
+import { EditDashboard } from '../components/EditDashboard';
 import Toast from '../components/Toast';
 import LoadingCard from '../components/LoadingCard';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,8 @@ const Index = () => {
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [isEditDashboardOpen, setIsEditDashboardOpen] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
   const [toast, setToast] = useState<{
     message: string;
     type: 'success' | 'error';
@@ -361,6 +364,15 @@ const Index = () => {
                 <Settings className="h-4 w-4" />
                 Backend Config
               </Button>
+              <Button
+                onClick={() => setIsEditDashboardOpen(true)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Edit Dashboard
+              </Button>
             </div>
           </div>
         </div>
@@ -468,6 +480,16 @@ const Index = () => {
           </div>
         </div>
       )}
+
+      <EditDashboard
+        isOpen={isEditDashboardOpen}
+        onClose={() => setIsEditDashboardOpen(false)}
+        initialData={dashboardData}
+        onSave={(data) => {
+          setDashboardData(data);
+          showToast('Dashboard data updated successfully', 'success');
+        }}
+      />
 
       <Toast
         message={toast.message}
